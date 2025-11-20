@@ -1,29 +1,95 @@
 const { useState, useEffect } = React;
 
-const API_BASE = window.location.origin;
+// Load API key from config (config.js is in .gitignore)
+let OPENAI_API_KEY = '';
+try {
+  if (window.OPENAI_CONFIG) {
+    OPENAI_API_KEY = window.OPENAI_CONFIG.API_KEY;
+  }
+} catch (e) {
+  console.warn('Config not loaded');
+}
+
+const wordsPerSecond = 2;
+
+const toneEndingRules = {
+  lullaby: 'must end with "good night" style line',
+  cheerful: 'must end with "have a good day" style line',
+  calm: 'ends with gentle reassurance',
+  motivational: 'ends with confident encouragement',
+};
 
 // CrewAI Agents
 class ScriptAgent {
-  async generate(persona, name, instructions, tone, durationSeconds) {
-    const response = await fetch(`${API_BASE}/api/generate-script`, {
+  async generate(apiKey, persona, name, instructions, tone, durationSeconds) {
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured. Please create a config.js file.');
+    }
+
+    const targetWords = Math.round(durationSeconds * wordsPerSecond);
+    const toneEndingRule = toneEndingRules[tone] || 'ends with gentle reassurance';
+
+    const systemPrompt = `You write second-person affirmation scripts spoken from a specified persona.
+
+Rules:
+- Begin most lines with "You".
+- If a name is provided, include it gently and sparingly.
+- Match the emotional style of the chosen persona.
+- Follow tone rules and end with the required tone-specific closing.
+- Use warm, simple, supportive language.
+- No negativity, contrast words, metaphors, or trauma.
+- Write one continuous flowing paragraph.
+- Plain text only.`;
+
+    const userPrompt = `Write a continuous second-person affirmation script.
+
+Persona: ${persona}
+Instructions: ${instructions || 'None'}
+Tone: ${tone}
+Duration: ${durationSeconds} seconds
+Target word count: ${targetWords}
+Optional name: ${name || 'None'}
+
+Begin most lines with "You".
+Use the name only where it feels gentle and meaningful.
+End with the required tone-based closing line:
+${toneEndingRule}
+
+One paragraph. No bullets or breaks.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ persona, name, instructions, tone, durationSeconds }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.8,
+        max_tokens: Math.min(targetWords * 2, 1000),
+      }),
     });
-    if (!response.ok) throw new Error('Failed to generate script');
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to generate script');
+    }
+
     const data = await response.json();
-    return data.script;
+    return data.choices[0].message.content.trim();
   }
 }
 
 class ProofAgent {
   validate(script, persona, tone) {
-    // Basic validation - ensure script exists and isn't empty
     if (!script || script.trim().length === 0) {
       return { valid: false, error: 'Script is empty' };
     }
     
-    // Check tone-specific endings
     const toneEndings = {
       lullaby: /good night|sleep well|rest well/i,
       cheerful: /good day|have a great|wonderful day/i,
@@ -41,34 +107,136 @@ class ProofAgent {
 }
 
 class VoiceAgent {
-  async generate(script, voice) {
-    const response = await fetch(`${API_BASE}/api/tts`, {
+  async generate(apiKey, script, voice) {
+    if (!apiKey) {
+      throw new Error('OpenAI API key not configured.');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ script, voice }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        voice: voice,
+        input: script,
+      }),
     });
-    if (!response.ok) throw new Error('Failed to generate TTS');
-    const data = await response.json();
-    return data.audio;
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to generate TTS');
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    return base64;
   }
 }
 
 class MusicAgent {
   async mix(ttsAudioBase64, backgroundTrackFilename, musicVolume) {
-    const response = await fetch(`${API_BASE}/api/mix`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ttsAudioBase64, backgroundTrackFilename, musicVolume }),
+    return new Promise((resolve, reject) => {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Load TTS audio
+      const ttsBlob = this.base64ToBlob(ttsAudioBase64, 'audio/mpeg');
+      const ttsUrl = URL.createObjectURL(ttsBlob);
+      
+      // Load background music
+      const musicUrl = `music/${backgroundTrackFilename}`;
+      
+      Promise.all([
+        this.loadAudio(audioContext, ttsUrl),
+        this.loadAudio(audioContext, musicUrl),
+      ]).then(([ttsBuffer, musicBuffer]) => {
+        // Create source nodes
+        const ttsSource = audioContext.createBufferSource();
+        const musicSource = audioContext.createBufferSource();
+        
+        ttsSource.buffer = ttsBuffer;
+        musicSource.buffer = musicBuffer;
+        
+        // Create gain nodes for volume control
+        const ttsGain = audioContext.createGain();
+        const musicGain = audioContext.createGain();
+        
+        ttsGain.gain.value = 1.0;
+        musicGain.gain.value = musicVolume || 0.3;
+        
+        // Connect nodes
+        ttsSource.connect(ttsGain);
+        musicSource.connect(musicGain);
+        ttsGain.connect(audioContext.destination);
+        musicGain.connect(audioContext.destination);
+        
+        // Create destination for recording
+        const destination = audioContext.createMediaStreamDestination();
+        ttsGain.connect(destination);
+        musicGain.connect(destination);
+        
+        // Record the mixed audio
+        const mediaRecorder = new MediaRecorder(destination.stream);
+        const chunks = [];
+        
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'audio/webm' });
+          this.blobToBase64(blob).then(base64 => {
+            URL.revokeObjectURL(ttsUrl);
+            resolve(base64);
+          });
+        };
+        
+        mediaRecorder.start();
+        ttsSource.start(0);
+        musicSource.start(0);
+        
+        const duration = Math.max(ttsBuffer.duration, musicBuffer.duration) * 1000;
+        setTimeout(() => {
+          mediaRecorder.stop();
+          ttsSource.stop();
+          musicSource.stop();
+        }, duration + 100);
+      }).catch(reject);
     });
-    if (!response.ok) throw new Error('Failed to mix audio');
-    const data = await response.json();
-    return data.audio;
+  }
+
+  loadAudio(audioContext, url) {
+    return fetch(url)
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer));
+  }
+
+  base64ToBlob(base64, mimeType) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+  }
+
+  blobToBase64(blob) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.readAsDataURL(blob);
+    });
   }
 }
 
 class DeliveryAgent {
   deliver(audioBase64, format = 'mp3') {
-    const audioBlob = this.base64ToBlob(audioBase64, `audio/${format}`);
+    // If it's webm from mixing, convert to blob directly
+    const mimeType = format === 'webm' ? 'audio/webm' : 'audio/mpeg';
+    const audioBlob = this.base64ToBlob(audioBase64, mimeType);
     const audioUrl = URL.createObjectURL(audioBlob);
     return { audioUrl, audioBlob };
   }
@@ -96,6 +264,7 @@ class DeliveryAgent {
 }
 
 function App() {
+  const [apiKey, setApiKey] = useState(OPENAI_API_KEY || '');
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -108,34 +277,36 @@ function App() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [musicFiles, setMusicFiles] = useState([]);
+  const [musicFiles] = useState([
+    'ambient-background-2-421085.mp3',
+    'cheerful-joyful-playful-music-380550.mp3',
+    'cinematic-ambient-348342.mp3',
+    'lullaby-acoustic-guitar-438657.mp3'
+  ]);
 
-  // Available voices
   const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
-  // Load music files
   useEffect(() => {
-    fetch(`${API_BASE}/api/music-files`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.files && data.files.length > 0) {
-          setMusicFiles(data.files);
-          setBackgroundMusic(data.files[0]);
-        }
-      })
-      .catch(() => {
-        // Fallback to known files
-        const knownFiles = [
-          'ambient-background-2-421085.mp3',
-          'cheerful-joyful-playful-music-380550.mp3',
-          'cinematic-ambient-348342.mp3',
-          'lullaby-acoustic-guitar-438657.mp3'
-        ];
-        setMusicFiles(knownFiles);
-        if (knownFiles.length > 0) {
-          setBackgroundMusic(knownFiles[0]);
-        }
-      });
+    if (musicFiles.length > 0) {
+      setBackgroundMusic(musicFiles[0]);
+    }
+  }, []);
+
+  // Save API key to localStorage when it changes
+  useEffect(() => {
+    if (apiKey && apiKey !== OPENAI_API_KEY) {
+      localStorage.setItem('openai_api_key', apiKey);
+    }
+  }, [apiKey]);
+
+  // Load API key from localStorage on mount
+  useEffect(() => {
+    const savedKey = localStorage.getItem('openai_api_key');
+    if (savedKey && !OPENAI_API_KEY) {
+      setApiKey(savedKey);
+    } else if (OPENAI_API_KEY) {
+      setApiKey(OPENAI_API_KEY);
+    }
   }, []);
 
   const testVoice = async () => {
@@ -144,11 +315,16 @@ function App() {
       return;
     }
     
+    if (!apiKey) {
+      setError('Please enter your OpenAI API key');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
       const voiceAgent = new VoiceAgent();
-      const audioBase64 = await voiceAgent.generate(script.substring(0, 100), voice);
+      const audioBase64 = await voiceAgent.generate(apiKey, script.substring(0, 100), voice);
       const deliveryAgent = new DeliveryAgent();
       const { audioUrl } = deliveryAgent.deliver(audioBase64);
       setAudioUrl(audioUrl);
@@ -165,11 +341,17 @@ function App() {
       return;
     }
 
+    if (!apiKey) {
+      setError('Please enter your OpenAI API key');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const scriptAgent = new ScriptAgent();
       const generatedScript = await scriptAgent.generate(
+        apiKey,
         persona,
         name,
         instructions,
@@ -190,11 +372,17 @@ function App() {
       return;
     }
 
+    if (!apiKey) {
+      setError('Please enter your OpenAI API key');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const scriptAgent = new ScriptAgent();
       const polishedScript = await scriptAgent.generate(
+        apiKey,
         persona,
         name,
         `Polish and refine this script: ${script}`,
@@ -215,34 +403,36 @@ function App() {
       return;
     }
 
+    if (!apiKey) {
+      setError('Please enter your OpenAI API key');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      // Validate script
       const proofAgent = new ProofAgent();
       const validation = proofAgent.validate(script, persona, tone);
       if (!validation.valid) {
         throw new Error(validation.error);
       }
 
-      // Generate TTS
       const voiceAgent = new VoiceAgent();
-      const ttsAudioBase64 = await voiceAgent.generate(script, voice);
+      const ttsAudioBase64 = await voiceAgent.generate(apiKey, script, voice);
 
-      // Mix with background music if selected
       let finalAudioBase64 = ttsAudioBase64;
+      let finalFormat = 'mp3';
+      
       if (backgroundMusic) {
         const musicAgent = new MusicAgent();
         finalAudioBase64 = await musicAgent.mix(ttsAudioBase64, backgroundMusic, musicVolume);
+        finalFormat = 'webm';
       }
 
-      // Deliver audio
       const deliveryAgent = new DeliveryAgent();
-      const { audioUrl: url, audioBlob } = deliveryAgent.deliver(finalAudioBase64);
+      const { audioUrl: url, audioBlob } = deliveryAgent.deliver(finalAudioBase64, finalFormat);
       setAudioUrl(url);
-      
-      // Store blob for download
       window.currentAudioBlob = audioBlob;
     } catch (err) {
       setError(err.message);
@@ -254,7 +444,7 @@ function App() {
   const downloadAudio = () => {
     if (window.currentAudioBlob) {
       const deliveryAgent = new DeliveryAgent();
-      const filename = `affirmation-${Date.now()}.mp3`;
+      const filename = `affirmation-${Date.now()}.${window.currentAudioBlob.type.includes('webm') ? 'webm' : 'mp3'}`;
       deliveryAgent.download(window.currentAudioBlob, filename);
     }
   };
@@ -269,6 +459,23 @@ function App() {
         With each listen, you will feel a little more centered, a little more supported, 
         and a little more connected to the comfort you deserve.
       </p>
+
+      {!OPENAI_API_KEY && (
+        <div className="form-section" style={{ background: 'rgba(246, 231, 198, 0.3)', padding: '20px', borderRadius: '12px', marginBottom: '24px' }}>
+          <label htmlFor="apiKey">OpenAI API Key *</label>
+          <input
+            type="password"
+            id="apiKey"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="sk-proj-..."
+            style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}
+          />
+          <p style={{ fontSize: '0.85rem', marginTop: '8px', opacity: 0.7 }}>
+            Your API key is stored locally in your browser and never shared.
+          </p>
+        </div>
+      )}
 
       <div className="form-section">
         <label htmlFor="persona">Persona *</label>
@@ -371,7 +578,7 @@ function App() {
       )}
 
       <div className="button-group">
-        <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading}>
+        <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading || !apiKey}>
           Generate Script
         </button>
       </div>
@@ -386,10 +593,10 @@ function App() {
             placeholder="Generated script will appear here..."
           />
           <div className="button-group" style={{ marginTop: '12px' }}>
-            <button className="btn-secondary lexend-body" onClick={polishScript} disabled={loading}>
+            <button className="btn-secondary lexend-body" onClick={polishScript} disabled={loading || !apiKey}>
               Polish with AI
             </button>
-            <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading}>
+            <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading || !apiKey}>
               Generate Audio
             </button>
           </div>
@@ -415,7 +622,7 @@ function App() {
           </h2>
           <audio className="audio-player" controls src={audioUrl} />
           <button className="download-btn lexend-body" onClick={downloadAudio}>
-            Download MP3
+            Download Audio
           </button>
         </div>
       )}
@@ -424,4 +631,3 @@ function App() {
 }
 
 ReactDOM.render(<App />, document.getElementById('root'));
-

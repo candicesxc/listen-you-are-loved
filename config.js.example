@@ -1,0 +1,7 @@
+// Copy this file to config.js and add your OpenAI API key
+// config.js is in .gitignore and will not be committed to GitHub
+
+window.OPENAI_CONFIG = {
+  API_KEY: 'sk-proj-your-api-key-here'
+};
+

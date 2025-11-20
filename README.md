@@ -6,135 +6,125 @@ With each listen, you will feel a little more centered, a little more supported,
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### No Installation Required!
 
-- **Node.js 18+** - [Download here](https://nodejs.org/)
-- **FFmpeg** - Required for audio mixing
-  - **macOS**: `brew install ffmpeg`
-  - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
-  - **Linux**: `sudo apt-get install ffmpeg` (Ubuntu/Debian) or `sudo yum install ffmpeg` (CentOS/RHEL)
-- **OpenAI API Key** - Get one at [platform.openai.com](https://platform.openai.com/api-keys)
+This app works entirely in your browser - just open `index.html`!
 
-### Local Setup
+### Setup (One-Time)
 
-1. **Clone the repository:**
+1. **Clone or download the repository:**
    ```bash
    git clone https://github.com/candicesxc/listen-you-are-loved.git
    cd listen-you-are-loved
    ```
 
-2. **Install dependencies:**
+2. **Add your OpenAI API key** (choose one method):
+   
+   **Option A: Create `config.js` file** (recommended for personal use):
    ```bash
-   npm install
+   cp config.js.example config.js
    ```
-
-3. **Create a `.env` file** in the root directory:
-   ```env
-   OPENAI_API_KEY=your_openai_api_key_here
-   PORT=3000
+   Then edit `config.js` and add your API key:
+   ```javascript
+   window.OPENAI_CONFIG = {
+     API_KEY: 'sk-proj-your-api-key-here'
+   };
    ```
-   ⚠️ **Important**: Never commit your `.env` file! It's already in `.gitignore`.
+   ⚠️ **Important**: `config.js` is in `.gitignore` and will never be committed to GitHub.
+   
+   **Option B: Enter API key in the UI** (works without config.js):
+   - Just open `index.html` and enter your API key in the form
+   - It will be saved locally in your browser
 
-4. **Start the server:**
-   ```bash
-   npm start
-   ```
+3. **Open `index.html` in your browser:**
+   - Simply double-click `index.html`, or
+   - Right-click → Open With → Your Browser
 
-5. **Open your browser:**
-   Navigate to `http://localhost:3000`
+That's it! No server, no installation, no dependencies needed.
 
 ## 📁 Project Structure
 
 ```
 /
-├── index.html          # Main HTML file (must be in root)
-├── server.js           # Express server
-├── package.json
-├── .env                # Environment variables (create this, not in git)
-├── /api/
-│   ├── generate-script.js  # LLM script generation
-│   ├── tts.js              # OpenAI TTS endpoint
-│   └── mix.js              # FFmpeg audio mixing
+├── index.html          # Main HTML file - just open this!
+├── config.js           # Your API key (create from config.js.example, not in git)
+├── config.js.example   # Template for config.js
 ├── /music/             # Background music files
-├── /src/
-│   └── App.js          # React frontend
-└── /public/            # Static assets
+└── /src/
+    └── App.js          # React frontend (all client-side)
 ```
+
+**Note**: The `/api/` and `server.js` files are legacy and not needed for the client-side version.
 
 ## ✨ Features
 
 - 🎭 **Personalized Scripts** - AI-generated affirmations based on persona and tone
 - 🎨 **Multiple Tones** - Cheerful, lullaby, calm, or motivational
 - 🎤 **Voice Selection** - Choose from 6 OpenAI TTS voices
-- 🎵 **Background Music** - Mix with ambient tracks
-- 📥 **Download MP3** - Save your personalized affirmations
+- 🎵 **Background Music** - Mix with ambient tracks using Web Audio API
+- 📥 **Download Audio** - Save your personalized affirmations
+- 🔒 **Privacy First** - API key stored locally, never shared
 
 ## 🌐 Deployment Options
 
-### Option 1: Railway (Recommended)
+Since this is a client-side app, you can host it anywhere that serves static files:
+
+### Option 1: GitHub Pages (Free & Easy)
 
 1. Push your code to GitHub
-2. Go to [railway.app](https://railway.app)
-3. Create a new project from GitHub
-4. Add environment variable: `OPENAI_API_KEY`
-5. Railway will auto-detect Node.js and deploy
+2. Go to Settings → Pages
+3. Select your branch and `/` (root) folder
+4. Your app will be live at `https://yourusername.github.io/listen-you-are-loved`
 
-**Note**: Railway supports FFmpeg, but you may need to add a buildpack or use a Dockerfile.
+**Note**: Users will need to add their own `config.js` or enter API key in the UI.
 
-### Option 2: Render
+### Option 2: Netlify/Vercel (Free)
 
 1. Push your code to GitHub
-2. Go to [render.com](https://render.com)
-3. Create a new Web Service
-4. Connect your GitHub repository
-5. Add environment variable: `OPENAI_API_KEY`
-6. Build command: `npm install`
-7. Start command: `npm start`
+2. Connect to [Netlify](https://netlify.com) or [Vercel](https://vercel.com)
+3. Deploy - it's just static files!
 
-**Note**: Render may require a Dockerfile for FFmpeg support.
+### Option 3: Any Web Host
 
-### Option 3: Vercel (Frontend) + Railway/Render (Backend)
+Just upload the files to any web hosting service. No server needed!
 
-Split the app:
-- Deploy frontend to Vercel
-- Deploy backend API to Railway/Render
-- Update `API_BASE` in `src/App.js` to point to your backend URL
+## 🔧 How It Works
 
-### Option 4: Heroku
+- **Fully Client-Side**: All processing happens in your browser
+- **Direct API Calls**: Calls OpenAI API directly from the browser
+- **Web Audio API**: Mixes audio in the browser (no FFmpeg needed)
+- **Local Storage**: API key can be saved in browser localStorage
+- **No Backend**: Zero server dependencies
 
-1. Install Heroku CLI
-2. Create `Procfile`: `web: node server.js`
-3. Push to Heroku: `git push heroku main`
-4. Set environment variable: `heroku config:set OPENAI_API_KEY=your_key`
+## 📝 API Key Setup
 
-## 🔧 Development
+Your API key can be provided in two ways:
 
-Run in development mode with auto-reload:
-```bash
-npm run dev
-```
+1. **config.js file** (recommended):
+   - Copy `config.js.example` to `config.js`
+   - Add your API key
+   - File is gitignored, stays private
 
-## 📝 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `OPENAI_API_KEY` | Your OpenAI API key | Yes |
-| `PORT` | Server port (default: 3000) | No |
+2. **UI Input**:
+   - Enter API key in the form
+   - Saved in browser localStorage
+   - Never leaves your browser
 
 ## 🛠️ Troubleshooting
-
-**FFmpeg not found:**
-- Ensure FFmpeg is installed and in your PATH
-- Test with: `ffmpeg -version`
 
 **OpenAI API errors:**
 - Verify your API key is correct
 - Check your OpenAI account has credits
-- Ensure the key has TTS permissions
+- Ensure the key has TTS and Chat API permissions
+- Check browser console for detailed error messages
 
-**Port already in use:**
-- Change `PORT` in `.env` file
-- Or kill the process using port 3000
+**Audio mixing not working:**
+- Ensure your browser supports Web Audio API (all modern browsers do)
+- Try a different browser if issues persist
+
+**Music files not loading:**
+- Ensure the `/music/` folder is in the same directory as `index.html`
+- Check browser console for 404 errors
 
 ## 📄 License
 
