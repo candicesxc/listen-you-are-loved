@@ -131,7 +131,15 @@ class VoiceAgent {
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    // Use chunked approach to avoid stack overflow
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode.apply(null, chunk);
+    }
+    const base64 = btoa(binary);
     return base64;
   }
 }
@@ -166,14 +174,12 @@ class MusicAgent {
         ttsGain.gain.value = 1.0;
         musicGain.gain.value = musicVolume || 0.3;
         
-        // Connect nodes
+        // Create destination for recording (don't connect to audioContext.destination)
+        const destination = audioContext.createMediaStreamDestination();
+        
+        // Connect nodes to recording destination only
         ttsSource.connect(ttsGain);
         musicSource.connect(musicGain);
-        ttsGain.connect(audioContext.destination);
-        musicGain.connect(audioContext.destination);
-        
-        // Create destination for recording
-        const destination = audioContext.createMediaStreamDestination();
         ttsGain.connect(destination);
         musicGain.connect(destination);
         
@@ -211,13 +217,21 @@ class MusicAgent {
   }
 
   base64ToBlob(base64, mimeType) {
+    // Use chunked approach to avoid stack overflow
     const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    const chunkSize = 8192;
+    const byteArrays = [];
+    
+    for (let i = 0; i < byteCharacters.length; i += chunkSize) {
+      const chunk = byteCharacters.slice(i, i + chunkSize);
+      const byteNumbers = new Array(chunk.length);
+      for (let j = 0; j < chunk.length; j++) {
+        byteNumbers[j] = chunk.charCodeAt(j);
+      }
+      byteArrays.push(new Uint8Array(byteNumbers));
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mimeType });
+    
+    return new Blob(byteArrays, { type: mimeType });
   }
 
   blobToBase64(blob) {
@@ -242,13 +256,21 @@ class DeliveryAgent {
   }
 
   base64ToBlob(base64, mimeType) {
+    // Use chunked approach to avoid stack overflow
     const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    const chunkSize = 8192;
+    const byteArrays = [];
+    
+    for (let i = 0; i < byteCharacters.length; i += chunkSize) {
+      const chunk = byteCharacters.slice(i, i + chunkSize);
+      const byteNumbers = new Array(chunk.length);
+      for (let j = 0; j < chunk.length; j++) {
+        byteNumbers[j] = chunk.charCodeAt(j);
+      }
+      byteArrays.push(new Uint8Array(byteNumbers));
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mimeType });
+    
+    return new Blob(byteArrays, { type: mimeType });
   }
 
   download(audioBlob, filename = 'affirmation.mp3') {
@@ -264,7 +286,8 @@ class DeliveryAgent {
 }
 
 function App() {
-  const [apiKey, setApiKey] = useState(OPENAI_API_KEY || '');
+  // Always use API key from config.js
+  const apiKey = OPENAI_API_KEY;
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -292,31 +315,9 @@ function App() {
     }
   }, []);
 
-  // Save API key to localStorage when it changes
-  useEffect(() => {
-    if (apiKey && apiKey !== OPENAI_API_KEY) {
-      localStorage.setItem('openai_api_key', apiKey);
-    }
-  }, [apiKey]);
-
-  // Load API key from localStorage on mount
-  useEffect(() => {
-    const savedKey = localStorage.getItem('openai_api_key');
-    if (savedKey && !OPENAI_API_KEY) {
-      setApiKey(savedKey);
-    } else if (OPENAI_API_KEY) {
-      setApiKey(OPENAI_API_KEY);
-    }
-  }, []);
-
   const testVoice = async () => {
-    if (!script) {
-      setError('Please generate a script first');
-      return;
-    }
-    
     if (!apiKey) {
-      setError('Please enter your OpenAI API key');
+      setError('OpenAI API key not configured. Please create config.js with your API key.');
       return;
     }
     
@@ -324,7 +325,8 @@ function App() {
       setLoading(true);
       setError(null);
       const voiceAgent = new VoiceAgent();
-      const audioBase64 = await voiceAgent.generate(apiKey, script.substring(0, 100), voice);
+      // Just say "hello" for testing
+      const audioBase64 = await voiceAgent.generate(apiKey, 'Hello', voice);
       const deliveryAgent = new DeliveryAgent();
       const { audioUrl } = deliveryAgent.deliver(audioBase64);
       setAudioUrl(audioUrl);
@@ -460,22 +462,6 @@ function App() {
         and a little more connected to the comfort you deserve.
       </p>
 
-      {!OPENAI_API_KEY && (
-        <div className="form-section" style={{ background: 'rgba(246, 231, 198, 0.3)', padding: '20px', borderRadius: '12px', marginBottom: '24px' }}>
-          <label htmlFor="apiKey">OpenAI API Key *</label>
-          <input
-            type="password"
-            id="apiKey"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="sk-proj-..."
-            style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}
-          />
-          <p style={{ fontSize: '0.85rem', marginTop: '8px', opacity: 0.7 }}>
-            Your API key is stored locally in your browser and never shared.
-          </p>
-        </div>
-      )}
 
       <div className="form-section">
         <label htmlFor="persona">Persona *</label>
@@ -536,11 +522,11 @@ function App() {
           ))}
         </select>
         <div className="voice-preview">
-          <button className="test-voice-btn" onClick={testVoice} disabled={!script || loading}>
+          <button className="test-voice-btn" onClick={testVoice} disabled={loading}>
             Test Voice
           </button>
           <span className="lexend-body" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-            {script ? 'Test with current script' : 'Generate script first'}
+            Says "Hello" to preview the voice
           </span>
         </div>
       </div>
@@ -574,6 +560,12 @@ function App() {
             />
             <span className="volume-value lexend-body">{Math.round(musicVolume * 100)}%</span>
           </div>
+        </div>
+      )}
+
+      {!apiKey && (
+        <div className="error lexend-body" style={{ marginBottom: '24px' }}>
+          ⚠️ OpenAI API key not found. Please create a config.js file with your API key. See config.js.example for reference.
         </div>
       )}
 
