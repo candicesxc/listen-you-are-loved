@@ -2,18 +2,33 @@ const { useState, useEffect } = React;
 
 // Load API key from config (config.js is in .gitignore)
 let OPENAI_API_KEY = '';
-try {
+
+// Function to get API key - checks multiple sources
+function getApiKey() {
+  // Check if config.js loaded
   if (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) {
-    OPENAI_API_KEY = window.OPENAI_CONFIG.API_KEY;
+    return window.OPENAI_CONFIG.API_KEY;
   }
-} catch (e) {
-  console.warn('Config not loaded');
+  return '';
 }
 
-// Also check if config loads after this script runs
-if (!OPENAI_API_KEY && window.OPENAI_CONFIG) {
-  OPENAI_API_KEY = window.OPENAI_CONFIG.API_KEY || '';
-}
+// Try to get API key immediately
+OPENAI_API_KEY = getApiKey();
+
+// Also check periodically in case config.js loads late
+let checkCount = 0;
+const maxChecks = 10;
+const checkInterval = setInterval(() => {
+  if (!OPENAI_API_KEY) {
+    OPENAI_API_KEY = getApiKey();
+    if (OPENAI_API_KEY || checkCount >= maxChecks) {
+      clearInterval(checkInterval);
+    }
+  } else {
+    clearInterval(checkInterval);
+  }
+  checkCount++;
+}, 100);
 
 const wordsPerSecond = 2;
 
@@ -292,14 +307,29 @@ class DeliveryAgent {
 
 function App() {
   // Always use API key from config.js - check on mount and when config loads
-  const [apiKey, setApiKey] = useState(OPENAI_API_KEY || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || '');
+  const getCurrentApiKey = () => {
+    return OPENAI_API_KEY || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || '';
+  };
+  
+  const [apiKey, setApiKey] = useState(getCurrentApiKey());
   
   // Check for API key after component mounts (in case config.js loads late)
   useEffect(() => {
-    if (!apiKey && window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) {
-      setApiKey(window.OPENAI_CONFIG.API_KEY);
+    const currentKey = getCurrentApiKey();
+    if (currentKey && currentKey !== apiKey) {
+      setApiKey(currentKey);
     }
-  }, []);
+    
+    // Also check periodically
+    const interval = setInterval(() => {
+      const key = getCurrentApiKey();
+      if (key && key !== apiKey) {
+        setApiKey(key);
+      }
+    }, 500);
+    
+    return () => clearInterval(interval);
+  }, [apiKey]);
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -328,10 +358,15 @@ function App() {
   }, []);
 
   const testVoice = async () => {
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
+      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key. Check the browser console for loading errors.');
+      console.error('API Key Debug:', {
+        apiKey: apiKey,
+        windowConfig: window.OPENAI_CONFIG,
+        OPENAI_API_KEY: OPENAI_API_KEY
+      });
       return;
     }
     
@@ -357,9 +392,14 @@ function App() {
       return;
     }
 
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
+      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key.');
+      console.error('API Key Debug:', {
+        apiKey: apiKey,
+        windowConfig: window.OPENAI_CONFIG,
+        OPENAI_API_KEY: OPENAI_API_KEY
+      });
       return;
     }
 
@@ -390,9 +430,14 @@ function App() {
       return;
     }
 
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
+      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key.');
+      console.error('API Key Debug:', {
+        apiKey: apiKey,
+        windowConfig: window.OPENAI_CONFIG,
+        OPENAI_API_KEY: OPENAI_API_KEY
+      });
       return;
     }
 
@@ -422,9 +467,14 @@ function App() {
       return;
     }
 
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
+      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key.');
+      console.error('API Key Debug:', {
+        apiKey: apiKey,
+        windowConfig: window.OPENAI_CONFIG,
+        OPENAI_API_KEY: OPENAI_API_KEY
+      });
       return;
     }
 
