@@ -288,13 +288,40 @@
 <body>
   <div id="root"></div>
 
-  <!-- Load config.js if it exists (for API key) -->
-  <script src="config.js" onerror="console.log('config.js not found - users can enter API key in the UI')"></script>
-  
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel" src="src/App.js"></script>
+  
+  <!-- Load config.js if it exists (for API key) - must load before App.js -->
+  <script>
+    // Try to load config.js
+    const script = document.createElement('script');
+    script.src = 'config.js';
+    script.onerror = function() {
+      console.log('config.js not found - using API key from config.js if available');
+      // Continue loading App.js even if config.js doesn't exist
+      loadApp();
+    };
+    script.onload = function() {
+      loadApp();
+    };
+    
+    // If config.js doesn't exist, still load the app
+    setTimeout(function() {
+      if (!window.OPENAI_CONFIG) {
+        loadApp();
+      }
+    }, 100);
+    
+    function loadApp() {
+      const appScript = document.createElement('script');
+      appScript.type = 'text/babel';
+      appScript.src = 'src/App.js';
+      document.body.appendChild(appScript);
+    }
+    
+    document.head.appendChild(script);
+  </script>
 </body>
 </html>
 

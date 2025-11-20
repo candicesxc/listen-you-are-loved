@@ -3,11 +3,16 @@ const { useState, useEffect } = React;
 // Load API key from config (config.js is in .gitignore)
 let OPENAI_API_KEY = '';
 try {
-  if (window.OPENAI_CONFIG) {
+  if (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) {
     OPENAI_API_KEY = window.OPENAI_CONFIG.API_KEY;
   }
 } catch (e) {
   console.warn('Config not loaded');
+}
+
+// Also check if config loads after this script runs
+if (!OPENAI_API_KEY && window.OPENAI_CONFIG) {
+  OPENAI_API_KEY = window.OPENAI_CONFIG.API_KEY || '';
 }
 
 const wordsPerSecond = 2;
@@ -286,8 +291,15 @@ class DeliveryAgent {
 }
 
 function App() {
-  // Always use API key from config.js
-  const apiKey = OPENAI_API_KEY;
+  // Always use API key from config.js - check on mount and when config loads
+  const [apiKey, setApiKey] = useState(OPENAI_API_KEY || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || '');
+  
+  // Check for API key after component mounts (in case config.js loads late)
+  useEffect(() => {
+    if (!apiKey && window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) {
+      setApiKey(window.OPENAI_CONFIG.API_KEY);
+    }
+  }, []);
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -316,8 +328,10 @@ function App() {
   }, []);
 
   const testVoice = async () => {
-    if (!apiKey) {
-      setError('OpenAI API key not configured. Please create config.js with your API key.');
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    
+    if (!currentApiKey) {
+      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
       return;
     }
     
@@ -326,12 +340,12 @@ function App() {
       setError(null);
       const voiceAgent = new VoiceAgent();
       // Just say "hello" for testing
-      const audioBase64 = await voiceAgent.generate(apiKey, 'Hello', voice);
+      const audioBase64 = await voiceAgent.generate(currentApiKey, 'Hello', voice);
       const deliveryAgent = new DeliveryAgent();
       const { audioUrl } = deliveryAgent.deliver(audioBase64);
       setAudioUrl(audioUrl);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to generate test voice');
     } finally {
       setLoading(false);
     }
@@ -343,17 +357,19 @@ function App() {
       return;
     }
 
-    if (!apiKey) {
-      setError('Please enter your OpenAI API key');
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    if (!currentApiKey) {
+      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
+      const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
       const scriptAgent = new ScriptAgent();
       const generatedScript = await scriptAgent.generate(
-        apiKey,
+        currentApiKey,
         persona,
         name,
         instructions,
@@ -374,8 +390,9 @@ function App() {
       return;
     }
 
-    if (!apiKey) {
-      setError('Please enter your OpenAI API key');
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    if (!currentApiKey) {
+      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
       return;
     }
 
@@ -384,7 +401,7 @@ function App() {
       setError(null);
       const scriptAgent = new ScriptAgent();
       const polishedScript = await scriptAgent.generate(
-        apiKey,
+        currentApiKey,
         persona,
         name,
         `Polish and refine this script: ${script}`,
@@ -405,8 +422,9 @@ function App() {
       return;
     }
 
-    if (!apiKey) {
-      setError('Please enter your OpenAI API key');
+    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
+    if (!currentApiKey) {
+      setError('OpenAI API key not found. Please ensure config.js exists with your API key.');
       return;
     }
 
@@ -421,7 +439,7 @@ function App() {
       }
 
       const voiceAgent = new VoiceAgent();
-      const ttsAudioBase64 = await voiceAgent.generate(apiKey, script, voice);
+      const ttsAudioBase64 = await voiceAgent.generate(currentApiKey, script, voice);
 
       let finalAudioBase64 = ttsAudioBase64;
       let finalFormat = 'mp3';
@@ -563,11 +581,6 @@ function App() {
         </div>
       )}
 
-      {!apiKey && (
-        <div className="error lexend-body" style={{ marginBottom: '24px' }}>
-          ⚠️ OpenAI API key not found. Please create a config.js file with your API key. See config.js.example for reference.
-        </div>
-      )}
 
       <div className="button-group">
         <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading || !apiKey}>
