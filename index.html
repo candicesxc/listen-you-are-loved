@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listen, You Are Loved</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Lexend", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 300;
+      font-style: normal;
+      background: linear-gradient(135deg, #FBFAF5 0%, #F7DDE2 50%, #F6E7C6 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #3E3A52;
+    }
+
+    .dynapuff-main {
+      font-family: "DynaPuff", system-ui;
+      font-optical-sizing: auto;
+      font-weight: 600;
+      font-style: normal;
+      font-variation-settings: "wdth" 100;
+    }
+
+    .lexend-body {
+      font-family: "Lexend", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 300;
+      font-style: normal;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: rgba(251, 250, 245, 0.95);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(62, 58, 82, 0.1);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      color: #3E3A52;
+      text-align: center;
+      animation: gentlePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes gentlePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.9; }
+    }
+
+    .description {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #3E3A52;
+      opacity: 0.9;
+    }
+
+    .form-section {
+      margin-bottom: 32px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 400;
+      color: #3E3A52;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #EFBBCF;
+      border-radius: 12px;
+      font-family: "Lexend", sans-serif;
+      font-size: 1rem;
+      background: #FBFAF5;
+      color: #3E3A52;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #C59A8A;
+      box-shadow: 0 0 0 3px rgba(197, 154, 138, 0.1);
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .voice-preview {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .test-voice-btn {
+      padding: 8px 16px;
+      background: #EFBBCF;
+      border: none;
+      border-radius: 8px;
+      color: #3E3A52;
+      font-family: "Lexend", sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .test-voice-btn:hover {
+      background: #C59A8A;
+      transform: translateY(-1px);
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #EFBBCF;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #C59A8A;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #C59A8A;
+      cursor: pointer;
+      border: none;
+    }
+
+    .volume-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    button {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-family: "Lexend", sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #EFBBCF 0%, #C59A8A 100%);
+      color: #3E3A52;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(197, 154, 138, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: #F6E7C6;
+      color: #3E3A52;
+    }
+
+    .btn-secondary:hover {
+      background: #F7DDE2;
+    }
+
+    .script-editor {
+      margin-top: 32px;
+    }
+
+    .script-editor textarea {
+      min-height: 150px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .audio-section {
+      margin-top: 32px;
+      padding: 24px;
+      background: rgba(246, 231, 198, 0.3);
+      border-radius: 16px;
+    }
+
+    .audio-player {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .download-btn {
+      width: 100%;
+      padding: 14px;
+      background: #C59A8A;
+      color: #FBFAF5;
+      border: none;
+      border-radius: 12px;
+      font-family: "Lexend", sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+      background: #3E3A52;
+      transform: translateY(-2px);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #C59A8A;
+    }
+
+    .error {
+      background: rgba(239, 187, 207, 0.3);
+      border: 2px solid #EFBBCF;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      color: #3E3A52;
+    }
+
+    @keyframes slowBreath {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    .container {
+      animation: slowBreath 6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" src="src/App.js"></script>
+</body>
+</html>
+
