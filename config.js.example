@@ -1,5 +1,15 @@
-// Copy this file to config.js and add your OpenAI API key
-// config.js is in .gitignore and will not be committed to GitHub
+// ⚠️ SECRET FILE TEMPLATE ⚠️
+// 
+// INSTRUCTIONS:
+// 1. Copy this file: cp config.js.example config.js
+// 2. Replace 'sk-proj-your-api-key-here' with your actual OpenAI API key
+// 3. NEVER commit config.js to Git (it's in .gitignore)
+// 4. If GitHub warns about secrets, ensure config.js is NOT tracked
+//
+// SECURITY:
+// - config.js is automatically ignored by .gitignore
+// - This file (config.js.example) is safe to commit (no real keys)
+// - If you accidentally commit config.js, rotate your API key immediately
 
 window.OPENAI_CONFIG = {
   API_KEY: 'sk-proj-your-api-key-here'
