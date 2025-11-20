@@ -32,9 +32,9 @@ This app works entirely in your browser - just open `index.html`!
    ```
    ⚠️ **Important**: `config.js` is in `.gitignore` and will never be committed to GitHub.
    
-   **Option B: Enter API key in the UI** (works without config.js):
-   - Just open `index.html` and enter your API key in the form
-   - It will be saved locally in your browser
+**Option B: Enter API key in the UI** (works without config.js):
+- Just open `index.html` and enter your API key in the form at the top of the page
+- It will be saved locally in your browser (localStorage) and never committed
 
 3. **Open `index.html` in your browser:**
    - Simply double-click `index.html`, or

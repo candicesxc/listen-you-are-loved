@@ -5,10 +5,17 @@ let OPENAI_API_KEY = '';
 
 // Function to get API key - checks multiple sources
 function getApiKey() {
-  // Check if config.js loaded
   if (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) {
     return window.OPENAI_CONFIG.API_KEY;
   }
+
+  try {
+    const storedKey = localStorage.getItem('openai_api_key');
+    if (storedKey) return storedKey;
+  } catch (err) {
+    console.warn('Unable to access localStorage for API key.', err);
+  }
+
   return '';
 }
 
@@ -306,12 +313,13 @@ class DeliveryAgent {
 }
 
 function App() {
-  // Always use API key from config.js - check on mount and when config loads
+  // Always use API key from config.js/localStorage - check on mount and when config loads
   const getCurrentApiKey = () => {
     return OPENAI_API_KEY || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || '';
   };
-  
+
   const [apiKey, setApiKey] = useState(getCurrentApiKey());
+  const [apiKeyInput, setApiKeyInput] = useState('');
   
   // Check for API key after component mounts (in case config.js loads late)
   useEffect(() => {
@@ -319,16 +327,31 @@ function App() {
     if (currentKey && currentKey !== apiKey) {
       setApiKey(currentKey);
     }
-    
+
+    if (!apiKeyInput && currentKey) {
+      setApiKeyInput(currentKey);
+    }
+
     // Also check periodically
     const interval = setInterval(() => {
       const key = getCurrentApiKey();
       if (key && key !== apiKey) {
         setApiKey(key);
+        setApiKeyInput(key);
       }
     }, 500);
-    
+
     return () => clearInterval(interval);
+  }, [apiKey, apiKeyInput]);
+
+  useEffect(() => {
+    if (apiKey) {
+      try {
+        localStorage.setItem('openai_api_key', apiKey);
+      } catch (err) {
+        console.warn('Unable to store API key in localStorage.', err);
+      }
+    }
   }, [apiKey]);
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
@@ -351,6 +374,24 @@ function App() {
 
   const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
+  const handleApiKeySave = () => {
+    const trimmedKey = apiKeyInput.trim();
+    if (trimmedKey) {
+      setApiKey(trimmedKey);
+      setError(null);
+    }
+  };
+
+  const handleApiKeyClear = () => {
+    setApiKey('');
+    setApiKeyInput('');
+    try {
+      localStorage.removeItem('openai_api_key');
+    } catch (err) {
+      console.warn('Unable to clear API key from localStorage.', err);
+    }
+  };
+
   useEffect(() => {
     if (musicFiles.length > 0) {
       setBackgroundMusic(musicFiles[0]);
@@ -361,12 +402,7 @@ function App() {
     const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key. Check the browser console for loading errors.');
-      console.error('API Key Debug:', {
-        apiKey: apiKey,
-        windowConfig: window.OPENAI_CONFIG,
-        OPENAI_API_KEY: OPENAI_API_KEY
-      });
+      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
       return;
     }
     
@@ -394,12 +430,7 @@ function App() {
 
     const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key.');
-      console.error('API Key Debug:', {
-        apiKey: apiKey,
-        windowConfig: window.OPENAI_CONFIG,
-        OPENAI_API_KEY: OPENAI_API_KEY
-      });
+      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
       return;
     }
 
@@ -432,12 +463,7 @@ function App() {
 
     const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key.');
-      console.error('API Key Debug:', {
-        apiKey: apiKey,
-        windowConfig: window.OPENAI_CONFIG,
-        OPENAI_API_KEY: OPENAI_API_KEY
-      });
+      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
       return;
     }
 
@@ -469,12 +495,7 @@ function App() {
 
     const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
     if (!currentApiKey) {
-      setError('OpenAI API key not found. Please ensure config.js exists in the same directory as index.html with your API key.');
-      console.error('API Key Debug:', {
-        apiKey: apiKey,
-        windowConfig: window.OPENAI_CONFIG,
-        OPENAI_API_KEY: OPENAI_API_KEY
-      });
+      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
       return;
     }
 
@@ -530,6 +551,28 @@ function App() {
         and a little more connected to the comfort you deserve.
       </p>
 
+      <div className="form-section">
+        <label htmlFor="apiKey">OpenAI API Key (stored only in your browser)</label>
+        <input
+          type="password"
+          id="apiKey"
+          value={apiKeyInput}
+          onChange={(e) => setApiKeyInput(e.target.value)}
+          placeholder="sk-..."
+          autoComplete="off"
+        />
+        <div className="voice-preview" style={{ marginTop: '10px' }}>
+          <button className="test-voice-btn" onClick={handleApiKeySave} disabled={!apiKeyInput.trim()}>
+            Save for this browser
+          </button>
+          <button className="test-voice-btn" onClick={handleApiKeyClear} style={{ background: '#f0d9e4' }}>
+            Clear key
+          </button>
+          <span className="lexend-body" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+            Key is kept in localStorage and never sent anywhere except OpenAI
+          </span>
+        </div>
+      </div>
 
       <div className="form-section">
         <label htmlFor="persona">Persona *</label>
