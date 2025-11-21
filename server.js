@@ -38,13 +38,20 @@ app.use('/music', express.static(path.join(__dirname, 'music')));
 // Static file serving for src folder
 app.use('/src', express.static(path.join(__dirname, 'src')));
 
-// Serve index.html for root route (before catch-all static)
+// Serve index.html for root route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Catch-all static file serving (must be last)
-app.use(express.static(path.join(__dirname)));
+// 404 handler for unmatched routes (must be last)
+app.use((req, res) => {
+  // If it's an API route that wasn't matched, return JSON error
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  // For other routes, return 404
+  res.status(404).send('Not found');
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
