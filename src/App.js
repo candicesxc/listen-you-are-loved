@@ -1,42 +1,5 @@
 const { useState, useEffect } = React;
 
-// Load API key from config (config.js is in .gitignore)
-let OPENAI_API_KEY = '';
-
-// Function to get API key - checks multiple sources
-function getApiKey() {
-  if (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) {
-    return window.OPENAI_CONFIG.API_KEY;
-  }
-
-  try {
-    const storedKey = localStorage.getItem('openai_api_key');
-    if (storedKey) return storedKey;
-  } catch (err) {
-    console.warn('Unable to access localStorage for API key.', err);
-  }
-
-  return '';
-}
-
-// Try to get API key immediately
-OPENAI_API_KEY = getApiKey();
-
-// Also check periodically in case config.js loads late
-let checkCount = 0;
-const maxChecks = 10;
-const checkInterval = setInterval(() => {
-  if (!OPENAI_API_KEY) {
-    OPENAI_API_KEY = getApiKey();
-    if (OPENAI_API_KEY || checkCount >= maxChecks) {
-      clearInterval(checkInterval);
-    }
-  } else {
-    clearInterval(checkInterval);
-  }
-  checkCount++;
-}, 100);
-
 const wordsPerSecond = 2;
 
 const toneEndingRules = {
@@ -46,71 +9,10 @@ const toneEndingRules = {
   motivational: 'ends with confident encouragement',
 };
 
-// CrewAI Agents
-class ScriptAgent {
-  async generate(apiKey, persona, name, instructions, tone, durationSeconds) {
-    if (!apiKey) {
-      throw new Error('OpenAI API key not configured. Please create a config.js file.');
-    }
+// API base URL - use relative path for same-origin requests
+const API_BASE = '/api';
 
-    const targetWords = Math.round(durationSeconds * wordsPerSecond);
-    const toneEndingRule = toneEndingRules[tone] || 'ends with gentle reassurance';
-
-    const systemPrompt = `You write second-person affirmation scripts spoken from a specified persona.
-
-Rules:
-- Begin most lines with "You".
-- If a name is provided, include it gently and sparingly.
-- Match the emotional style of the chosen persona.
-- Follow tone rules and end with the required tone-specific closing.
-- Use warm, simple, supportive language.
-- No negativity, contrast words, metaphors, or trauma.
-- Write one continuous flowing paragraph.
-- Plain text only.`;
-
-    const userPrompt = `Write a continuous second-person affirmation script.
-
-Persona: ${persona}
-Instructions: ${instructions || 'None'}
-Tone: ${tone}
-Duration: ${durationSeconds} seconds
-Target word count: ${targetWords}
-Optional name: ${name || 'None'}
-
-Begin most lines with "You".
-Use the name only where it feels gentle and meaningful.
-End with the required tone-based closing line:
-${toneEndingRule}
-
-One paragraph. No bullets or breaks.`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.8,
-        max_tokens: Math.min(targetWords * 2, 1000),
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to generate script');
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
-  }
-}
-
+// ProofAgent - client-side validation only
 class ProofAgent {
   validate(script, persona, tone) {
     if (!script || script.trim().length === 0) {
@@ -133,44 +35,7 @@ class ProofAgent {
   }
 }
 
-class VoiceAgent {
-  async generate(apiKey, script, voice) {
-    if (!apiKey) {
-      throw new Error('OpenAI API key not configured.');
-    }
-
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        voice: voice,
-        input: script,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to generate TTS');
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    // Use chunked approach to avoid stack overflow
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      binary += String.fromCharCode.apply(null, chunk);
-    }
-    const base64 = btoa(binary);
-    return base64;
-  }
-}
-
+// MusicAgent - handles client-side audio mixing
 class MusicAgent {
   async mix(ttsAudioBase64, backgroundTrackFilename, musicVolume) {
     return new Promise((resolve, reject) => {
@@ -180,8 +45,8 @@ class MusicAgent {
       const ttsBlob = this.base64ToBlob(ttsAudioBase64, 'audio/mpeg');
       const ttsUrl = URL.createObjectURL(ttsBlob);
       
-      // Load background music
-      const musicUrl = `music/${backgroundTrackFilename}`;
+      // Load background music from server
+      const musicUrl = `/music/${backgroundTrackFilename}`;
       
       Promise.all([
         this.loadAudio(audioContext, ttsUrl),
@@ -313,46 +178,6 @@ class DeliveryAgent {
 }
 
 function App() {
-  // Always use API key from config.js/localStorage - check on mount and when config loads
-  const getCurrentApiKey = () => {
-    return OPENAI_API_KEY || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || '';
-  };
-
-  const [apiKey, setApiKey] = useState(getCurrentApiKey());
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  
-  // Check for API key after component mounts (in case config.js loads late)
-  useEffect(() => {
-    const currentKey = getCurrentApiKey();
-    if (currentKey && currentKey !== apiKey) {
-      setApiKey(currentKey);
-    }
-
-    if (!apiKeyInput && currentKey) {
-      setApiKeyInput(currentKey);
-    }
-
-    // Also check periodically
-    const interval = setInterval(() => {
-      const key = getCurrentApiKey();
-      if (key && key !== apiKey) {
-        setApiKey(key);
-        setApiKeyInput(key);
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [apiKey, apiKeyInput]);
-
-  useEffect(() => {
-    if (apiKey) {
-      try {
-        localStorage.setItem('openai_api_key', apiKey);
-      } catch (err) {
-        console.warn('Unable to store API key in localStorage.', err);
-      }
-    }
-  }, [apiKey]);
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -365,55 +190,59 @@ function App() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [musicFiles] = useState([
-    'ambient-background-2-421085.mp3',
-    'cheerful-joyful-playful-music-380550.mp3',
-    'cinematic-ambient-348342.mp3',
-    'lullaby-acoustic-guitar-438657.mp3'
-  ]);
+  const [musicFiles, setMusicFiles] = useState([]);
 
   const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
-  const handleApiKeySave = () => {
-    const trimmedKey = apiKeyInput.trim();
-    if (trimmedKey) {
-      setApiKey(trimmedKey);
-      setError(null);
-    }
-  };
-
-  const handleApiKeyClear = () => {
-    setApiKey('');
-    setApiKeyInput('');
-    try {
-      localStorage.removeItem('openai_api_key');
-    } catch (err) {
-      console.warn('Unable to clear API key from localStorage.', err);
-    }
-  };
-
+  // Fetch music files from backend on mount
   useEffect(() => {
-    if (musicFiles.length > 0) {
-      setBackgroundMusic(musicFiles[0]);
-    }
+    fetch(`${API_BASE}/music-files`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.files && data.files.length > 0) {
+          setMusicFiles(data.files);
+          setBackgroundMusic(data.files[0]);
+        }
+      })
+      .catch(err => {
+        console.warn('Failed to load music files:', err);
+        // Fallback to hardcoded list if API fails
+        const fallbackFiles = [
+          'ambient-background-2-421085.mp3',
+          'cheerful-joyful-playful-music-380550.mp3',
+          'cinematic-ambient-348342.mp3',
+          'lullaby-acoustic-guitar-438657.mp3'
+        ];
+        setMusicFiles(fallbackFiles);
+        setBackgroundMusic(fallbackFiles[0]);
+      });
   }, []);
 
   const testVoice = async () => {
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
-    
-    if (!currentApiKey) {
-      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
-      return;
-    }
-    
     try {
       setLoading(true);
       setError(null);
-      const voiceAgent = new VoiceAgent();
-      // Just say "hello" for testing
-      const audioBase64 = await voiceAgent.generate(currentApiKey, 'Hello', voice);
+      
+      // Call backend TTS API
+      const response = await fetch(`${API_BASE}/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          script: 'Hello',
+          voice: voice,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate test voice');
+      }
+
+      const data = await response.json();
       const deliveryAgent = new DeliveryAgent();
-      const { audioUrl } = deliveryAgent.deliver(audioBase64);
+      const { audioUrl } = deliveryAgent.deliver(data.audio, data.format || 'mp3');
       setAudioUrl(audioUrl);
     } catch (err) {
       setError(err.message || 'Failed to generate test voice');
@@ -428,28 +257,34 @@ function App() {
       return;
     }
 
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
-    if (!currentApiKey) {
-      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
-      const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY);
-      const scriptAgent = new ScriptAgent();
-      const generatedScript = await scriptAgent.generate(
-        currentApiKey,
-        persona,
-        name,
-        instructions,
-        tone,
-        duration
-      );
-      setScript(generatedScript);
+      
+      // Call backend script generation API
+      const response = await fetch(`${API_BASE}/generate-script`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          persona,
+          name,
+          instructions,
+          tone,
+          durationSeconds: duration,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate script');
+      }
+
+      const data = await response.json();
+      setScript(data.script);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to generate script');
     } finally {
       setLoading(false);
     }
@@ -461,27 +296,34 @@ function App() {
       return;
     }
 
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
-    if (!currentApiKey) {
-      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
-      const scriptAgent = new ScriptAgent();
-      const polishedScript = await scriptAgent.generate(
-        currentApiKey,
-        persona,
-        name,
-        `Polish and refine this script: ${script}`,
-        tone,
-        duration
-      );
-      setScript(polishedScript);
+      
+      // Use generate-script API with polish instructions
+      const response = await fetch(`${API_BASE}/generate-script`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          persona,
+          name,
+          instructions: `Polish and refine this script: ${script}`,
+          tone,
+          durationSeconds: duration,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to polish script');
+      }
+
+      const data = await response.json();
+      setScript(data.script);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to polish script');
     } finally {
       setLoading(false);
     }
@@ -490,12 +332,6 @@ function App() {
   const generateAudio = async () => {
     if (!script) {
       setError('Please generate a script first');
-      return;
-    }
-
-    const currentApiKey = apiKey || (window.OPENAI_CONFIG && window.OPENAI_CONFIG.API_KEY) || OPENAI_API_KEY;
-    if (!currentApiKey) {
-      setError('OpenAI API key not found. Please add it via config.js or the secure local field below.');
       return;
     }
 
@@ -509,15 +345,31 @@ function App() {
         throw new Error(validation.error);
       }
 
-      const voiceAgent = new VoiceAgent();
-      const ttsAudioBase64 = await voiceAgent.generate(currentApiKey, script, voice);
+      // Call backend TTS API
+      const ttsResponse = await fetch(`${API_BASE}/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          script: script,
+          voice: voice,
+        }),
+      });
 
-      let finalAudioBase64 = ttsAudioBase64;
-      let finalFormat = 'mp3';
+      if (!ttsResponse.ok) {
+        const errorData = await ttsResponse.json();
+        throw new Error(errorData.error || 'Failed to generate TTS');
+      }
+
+      const ttsData = await ttsResponse.json();
+      let finalAudioBase64 = ttsData.audio;
+      let finalFormat = ttsData.format || 'mp3';
       
+      // If background music is selected, mix it client-side
       if (backgroundMusic) {
         const musicAgent = new MusicAgent();
-        finalAudioBase64 = await musicAgent.mix(ttsAudioBase64, backgroundMusic, musicVolume);
+        finalAudioBase64 = await musicAgent.mix(finalAudioBase64, backgroundMusic, musicVolume);
         finalFormat = 'webm';
       }
 
@@ -526,7 +378,7 @@ function App() {
       setAudioUrl(url);
       window.currentAudioBlob = audioBlob;
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to generate audio');
     } finally {
       setLoading(false);
     }
@@ -550,29 +402,6 @@ function App() {
         With each listen, you will feel a little more centered, a little more supported, 
         and a little more connected to the comfort you deserve.
       </p>
-
-      <div className="form-section">
-        <label htmlFor="apiKey">OpenAI API Key (stored only in your browser)</label>
-        <input
-          type="password"
-          id="apiKey"
-          value={apiKeyInput}
-          onChange={(e) => setApiKeyInput(e.target.value)}
-          placeholder="sk-..."
-          autoComplete="off"
-        />
-        <div className="voice-preview" style={{ marginTop: '10px' }}>
-          <button className="test-voice-btn" onClick={handleApiKeySave} disabled={!apiKeyInput.trim()}>
-            Save for this browser
-          </button>
-          <button className="test-voice-btn" onClick={handleApiKeyClear} style={{ background: '#f0d9e4' }}>
-            Clear key
-          </button>
-          <span className="lexend-body" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-            Key is kept in localStorage and never sent anywhere except OpenAI
-          </span>
-        </div>
-      </div>
 
       <div className="form-section">
         <label htmlFor="persona">Persona *</label>
@@ -676,7 +505,7 @@ function App() {
 
 
       <div className="button-group">
-        <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading || !apiKey}>
+        <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading}>
           Generate Script
         </button>
       </div>
@@ -691,10 +520,10 @@ function App() {
             placeholder="Generated script will appear here..."
           />
           <div className="button-group" style={{ marginTop: '12px' }}>
-            <button className="btn-secondary lexend-body" onClick={polishScript} disabled={loading || !apiKey}>
+            <button className="btn-secondary lexend-body" onClick={polishScript} disabled={loading}>
               Polish with AI
             </button>
-            <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading || !apiKey}>
+            <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading}>
               Generate Audio
             </button>
           </div>

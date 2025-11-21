@@ -6,55 +6,80 @@ With each listen, you will feel a little more centered, a little more supported,
 
 ## 🚀 Quick Start
 
-### No Installation Required!
+### Prerequisites
 
-This app works entirely in your browser - just open `index.html`!
+- Node.js (v14 or higher)
+- npm or yarn
+- OpenAI API key ([get one here](https://platform.openai.com/api-keys))
 
-### Setup (One-Time)
+### Setup
 
-1. **Clone or download the repository:**
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/candicesxc/listen-you-are-loved.git
    cd listen-you-are-loved
    ```
 
-2. **Add your OpenAI API key** (choose one method):
-   
-   **Option A: Create `config.js` file** (recommended for personal use):
+2. **Install dependencies:**
    ```bash
-   cp config.js.example config.js
+   npm install
    ```
-   Then edit `config.js` and add your API key:
-   ```javascript
-   window.OPENAI_CONFIG = {
-     API_KEY: 'sk-proj-your-api-key-here'
-   };
-   ```
-   ⚠️ **Important**: `config.js` is in `.gitignore` and will never be committed to GitHub.
+
+3. **Set up environment variables:**
    
-**Option B: Enter API key in the UI** (works without config.js):
-- Just open `index.html` and enter your API key in the form at the top of the page
-- It will be saved locally in your browser (localStorage) and never committed
+   Create a `.env` file in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Then edit `.env` and add your OpenAI API key:
+   ```env
+   OPENAI_API_KEY=sk-proj-your-actual-api-key-here
+   ```
+   
+   ⚠️ **Important**: The `.env` file is in `.gitignore` and will never be committed to GitHub. Never share your API key publicly.
 
-3. **Open `index.html` in your browser:**
-   - Simply double-click `index.html`, or
-   - Right-click → Open With → Your Browser
+4. **Start the server:**
+   ```bash
+   npm start
+   ```
+   
+   Or for development with auto-reload:
+   ```bash
+   npm run dev
+   ```
 
-That's it! No server, no installation, no dependencies needed.
+5. **Open the app:**
+   
+   Navigate to `http://localhost:3000` in your browser.
+
+That's it! The app is now running with your server-side API key.
 
 ## 📁 Project Structure
 
 ```
 /
-├── index.html          # Main HTML file - just open this!
-├── config.js           # Your API key (create from config.js.example, not in git)
-├── config.js.example   # Template for config.js
+├── index.html          # Main HTML file (entry point)
+├── server.js           # Express server
+├── .env.example        # Environment variable template
+├── package.json        # Dependencies
+├── /api/               # Backend API endpoints
+│   ├── generate-script.js  # Script generation endpoint
+│   ├── tts.js              # Text-to-speech endpoint
+│   └── mix.js              # Audio mixing endpoint (optional)
 ├── /music/             # Background music files
 └── /src/
-    └── App.js          # React frontend (all client-side)
+    └── App.js          # React frontend
 ```
 
-**Note**: The `/api/` and `server.js` files are legacy and not needed for the client-side version.
+## 🔒 Security
+
+**All OpenAI API calls happen server-side only.** 
+
+- The API key is stored in the `.env` file on the server
+- The frontend never sees or handles API keys
+- No user input is required for API keys
+- The API key is never sent to the client or logged
 
 ## ✨ Features
 
@@ -63,68 +88,65 @@ That's it! No server, no installation, no dependencies needed.
 - 🎤 **Voice Selection** - Choose from 6 OpenAI TTS voices
 - 🎵 **Background Music** - Mix with ambient tracks using Web Audio API
 - 📥 **Download Audio** - Save your personalized affirmations
-- 🔒 **Privacy First** - API key stored locally, never shared
+- 🔒 **Privacy First** - API key stored server-side, never exposed to clients
 
-## 🌐 Deployment Options
+## 🌐 Deployment
 
-Since this is a client-side app, you can host it anywhere that serves static files:
+### Environment Variables
 
-### Option 1: GitHub Pages (Free & Easy)
+Make sure to set the `OPENAI_API_KEY` environment variable in your deployment platform:
 
-1. Push your code to GitHub
-2. Go to Settings → Pages
-3. Select your branch and `/` (root) folder
-4. Your app will be live at `https://yourusername.github.io/listen-you-are-loved`
+- **Heroku**: Set in Config Vars
+- **Railway**: Set in Environment Variables
+- **Render**: Set in Environment Variables
+- **Vercel/Netlify**: Set in Environment Variables
 
-**Note**: Users will need to add their own `config.js` or enter API key in the UI.
-
-### Option 2: Netlify/Vercel (Free)
+### Example Deployment
 
 1. Push your code to GitHub
-2. Connect to [Netlify](https://netlify.com) or [Vercel](https://vercel.com)
-3. Deploy - it's just static files!
+2. Connect to your deployment platform (Heroku, Railway, Render, etc.)
+3. Set `OPENAI_API_KEY` environment variable in the platform
+4. Deploy!
 
-### Option 3: Any Web Host
-
-Just upload the files to any web hosting service. No server needed!
+**Note**: The app requires a Node.js backend to run, so static hosting (GitHub Pages, plain Vercel/Netlify) won't work. Use a platform that supports Node.js servers.
 
 ## 🔧 How It Works
 
-- **Fully Client-Side**: All processing happens in your browser
-- **Direct API Calls**: Calls OpenAI API directly from the browser
-- **Web Audio API**: Mixes audio in the browser (no FFmpeg needed)
-- **Local Storage**: API key can be saved in browser localStorage
-- **No Backend**: Zero server dependencies
+- **Backend API**: Express server handles all OpenAI API calls
+- **Frontend**: React app collects user inputs and calls backend endpoints
+- **Text-to-Speech**: OpenAI TTS API generates speech from scripts
+- **Audio Mixing**: Web Audio API mixes TTS with background music in the browser
+- **Security**: API key never leaves the server
 
-## 📝 API Key Setup
+## 📝 API Endpoints
 
-Your API key can be provided in two ways:
-
-1. **config.js file** (recommended):
-   - Copy `config.js.example` to `config.js`
-   - Add your API key
-   - File is gitignored, stays private
-
-2. **UI Input**:
-   - Enter API key in the form
-   - Saved in browser localStorage
-   - Never leaves your browser
+- `POST /api/generate-script` - Generate affirmation script
+- `POST /api/tts` - Generate text-to-speech audio
+- `POST /api/mix` - Mix TTS audio with background music (server-side, optional)
+- `GET /api/music-files` - List available background music files
+- `GET /` - Serve the main application
 
 ## 🛠️ Troubleshooting
 
+**Server won't start:**
+- Ensure Node.js is installed (`node --version`)
+- Check that dependencies are installed (`npm install`)
+- Verify `.env` file exists with `OPENAI_API_KEY` set
+
 **OpenAI API errors:**
-- Verify your API key is correct
+- Verify your API key is correct in `.env`
 - Check your OpenAI account has credits
 - Ensure the key has TTS and Chat API permissions
-- Check browser console for detailed error messages
+- Check server console for detailed error messages
 
 **Audio mixing not working:**
 - Ensure your browser supports Web Audio API (all modern browsers do)
 - Try a different browser if issues persist
 
 **Music files not loading:**
-- Ensure the `/music/` folder is in the same directory as `index.html`
+- Ensure the `/music/` folder contains MP3 files
 - Check browser console for 404 errors
+- Verify the server is serving static files correctly
 
 ## 📄 License
 
@@ -133,4 +155,3 @@ ISC
 ## 🙏 Contributing
 
 Feel free to open issues or submit pull requests!
-
