@@ -194,10 +194,56 @@ function App() {
 
   const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
+  // Helper function to safely parse JSON responses
+  const parseJsonResponse = async (response) => {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Server returned non-JSON response (${response.status}): ${text.substring(0, 150)}`);
+    }
+    return response.json();
+  };
+
+  // Helper function to safely handle error responses
+  const handleErrorResponse = async (response) => {
+    // Clone the response so we can read it without consuming the body
+    const clonedResponse = response.clone();
+    const contentType = response.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json')) {
+      try {
+        const errorData = await response.json();
+        return errorData.error || `Server error (${response.status})`;
+      } catch (e) {
+        // If JSON parsing fails, try reading as text from cloned response
+        try {
+          const errorText = await clonedResponse.text();
+          return `Server error (${response.status}): ${errorText.substring(0, 200)}`;
+        } catch (textErr) {
+          return `Server error (${response.status}): Unable to parse response`;
+        }
+      }
+    }
+    
+    // If not JSON, read as text
+    try {
+      const errorText = await response.text();
+      return `Server error (${response.status}): ${errorText.substring(0, 200)}`;
+    } catch (e) {
+      return `Server error (${response.status}): Unable to read response`;
+    }
+  };
+
   // Fetch music files from backend on mount
   useEffect(() => {
     fetch(`${API_BASE}/music-files`)
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed to load music files: ${res.status} ${errorText.substring(0, 100)}`);
+        }
+        return parseJsonResponse(res);
+      })
       .then(data => {
         if (data.files && data.files.length > 0) {
           setMusicFiles(data.files);
@@ -236,11 +282,11 @@ function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate test voice');
+        const errorMessage = await handleErrorResponse(response);
+        throw new Error(errorMessage || 'Failed to generate test voice');
       }
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       const deliveryAgent = new DeliveryAgent();
       const { audioUrl } = deliveryAgent.deliver(data.audio, data.format || 'mp3');
       setAudioUrl(audioUrl);
@@ -277,11 +323,11 @@ function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate script');
+        const errorMessage = await handleErrorResponse(response);
+        throw new Error(errorMessage || 'Failed to generate script');
       }
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       setScript(data.script);
     } catch (err) {
       setError(err.message || 'Failed to generate script');
@@ -316,11 +362,11 @@ function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to polish script');
+        const errorMessage = await handleErrorResponse(response);
+        throw new Error(errorMessage || 'Failed to polish script');
       }
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       setScript(data.script);
     } catch (err) {
       setError(err.message || 'Failed to polish script');
@@ -358,11 +404,11 @@ function App() {
       });
 
       if (!ttsResponse.ok) {
-        const errorData = await ttsResponse.json();
-        throw new Error(errorData.error || 'Failed to generate TTS');
+        const errorMessage = await handleErrorResponse(ttsResponse);
+        throw new Error(errorMessage || 'Failed to generate TTS');
       }
 
-      const ttsData = await ttsResponse.json();
+      const ttsData = await parseJsonResponse(ttsResponse);
       let finalAudioBase64 = ttsData.audio;
       let finalFormat = ttsData.format || 'mp3';
       
