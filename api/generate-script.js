@@ -15,6 +15,10 @@ const toneEndingRules = {
 
 module.exports = async (req, res) => {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'Server OpenAI API key not configured.' });
+    }
+
     const { persona, name, instructions, tone, durationSeconds } = req.body;
 
     if (!persona || !tone || !durationSeconds) {
