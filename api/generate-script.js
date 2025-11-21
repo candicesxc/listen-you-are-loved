@@ -1,5 +1,9 @@
 const OpenAI = require('openai');
 
+if (!process.env.OPENAI_API_KEY) {
+  console.error('ERROR: OPENAI_API_KEY environment variable is not set');
+}
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -15,6 +19,12 @@ const toneEndingRules = {
 
 module.exports = async (req, res) => {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ 
+        error: 'Server configuration error: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.' 
+      });
+    }
+
     const { persona, name, instructions, tone, durationSeconds } = req.body;
 
     if (!persona || !tone || !durationSeconds) {
