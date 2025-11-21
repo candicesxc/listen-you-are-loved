@@ -1,136 +1,57 @@
 # Listen, You Are Loved
 
-Customize their tone, who they speak as, the words they use, and the sound of the voice itself, then let them read your personalized affirmations aloud with gentle care.
-
-With each listen, you will feel a little more centered, a little more supported, and a little more connected to the comfort you deserve.
+Server-backed web app for generating personalized affirmation scripts, turning them into speech, and optionally mixing them with background music.
 
 ## 🚀 Quick Start
 
-### No Installation Required!
-
-This app works entirely in your browser - just open `index.html`!
-
-### Setup (One-Time)
-
-1. **Clone or download the repository:**
+1. **Install dependencies**
    ```bash
-   git clone https://github.com/candicesxc/listen-you-are-loved.git
-   cd listen-you-are-loved
+   npm install
    ```
 
-2. **Add your OpenAI API key** (choose one method):
-   
-   **Option A: Create `config.js` file** (recommended for personal use):
+2. **Configure the OpenAI API key (server-side only)**
+   Create a `.env` file in the project root:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+   The key is read only by the backend. It is never sent to the browser and the UI never asks for it.
+
+3. **Run the server**
    ```bash
-   cp config.js.example config.js
+   npm start
    ```
-   Then edit `config.js` and add your API key:
-   ```javascript
-   window.OPENAI_CONFIG = {
-     API_KEY: 'sk-proj-your-api-key-here'
-   };
-   ```
-   ⚠️ **Important**: `config.js` is in `.gitignore` and will never be committed to GitHub.
-   
-**Option B: Enter API key in the UI** (works without config.js):
-- Just open `index.html` and enter your API key in the form at the top of the page
-- It will be saved locally in your browser (localStorage) and never committed
-
-3. **Open `index.html` in your browser:**
-   - Simply double-click `index.html`, or
-   - Right-click → Open With → Your Browser
-
-That's it! No server, no installation, no dependencies needed.
+   The app will be available at `http://localhost:3000`.
 
 ## 📁 Project Structure
-
 ```
-/
-├── index.html          # Main HTML file - just open this!
-├── config.js           # Your API key (create from config.js.example, not in git)
-├── config.js.example   # Template for config.js
-├── /music/             # Background music files
-└── /src/
-    └── App.js          # React frontend (all client-side)
+/                     # Express server + static frontend
+├── api/              # Backend API routes (uses server-side OpenAI key)
+├── music/            # Background music files
+├── src/App.js        # React UI (loads via script tag)
+├── index.html        # Entry point served by Express
+├── server.js         # Express server
+└── .env              # Contains OPENAI_API_KEY (not committed)
 ```
 
-**Note**: The `/api/` and `server.js` files are legacy and not needed for the client-side version.
+## 🔒 Security
+- All OpenAI requests are made from the server using `process.env.OPENAI_API_KEY`.
+- The frontend never prompts for or stores API keys.
+- No API credentials are embedded in any public or client-side files.
 
 ## ✨ Features
+- AI-generated affirmation scripts tailored by persona, tone, and duration
+- Optional background music with adjustable volume
+- Multiple OpenAI voices for text-to-speech
+- Downloadable mixed audio output
 
-- 🎭 **Personalized Scripts** - AI-generated affirmations based on persona and tone
-- 🎨 **Multiple Tones** - Cheerful, lullaby, calm, or motivational
-- 🎤 **Voice Selection** - Choose from 6 OpenAI TTS voices
-- 🎵 **Background Music** - Mix with ambient tracks using Web Audio API
-- 📥 **Download Audio** - Save your personalized affirmations
-- 🔒 **Privacy First** - API key stored locally, never shared
-
-## 🌐 Deployment Options
-
-Since this is a client-side app, you can host it anywhere that serves static files:
-
-### Option 1: GitHub Pages (Free & Easy)
-
-1. Push your code to GitHub
-2. Go to Settings → Pages
-3. Select your branch and `/` (root) folder
-4. Your app will be live at `https://yourusername.github.io/listen-you-are-loved`
-
-**Note**: Users will need to add their own `config.js` or enter API key in the UI.
-
-### Option 2: Netlify/Vercel (Free)
-
-1. Push your code to GitHub
-2. Connect to [Netlify](https://netlify.com) or [Vercel](https://vercel.com)
-3. Deploy - it's just static files!
-
-### Option 3: Any Web Host
-
-Just upload the files to any web hosting service. No server needed!
-
-## 🔧 How It Works
-
-- **Fully Client-Side**: All processing happens in your browser
-- **Direct API Calls**: Calls OpenAI API directly from the browser
-- **Web Audio API**: Mixes audio in the browser (no FFmpeg needed)
-- **Local Storage**: API key can be saved in browser localStorage
-- **No Backend**: Zero server dependencies
-
-## 📝 API Key Setup
-
-Your API key can be provided in two ways:
-
-1. **config.js file** (recommended):
-   - Copy `config.js.example` to `config.js`
-   - Add your API key
-   - File is gitignored, stays private
-
-2. **UI Input**:
-   - Enter API key in the form
-   - Saved in browser localStorage
-   - Never leaves your browser
-
-## 🛠️ Troubleshooting
-
-**OpenAI API errors:**
-- Verify your API key is correct
-- Check your OpenAI account has credits
-- Ensure the key has TTS and Chat API permissions
-- Check browser console for detailed error messages
-
-**Audio mixing not working:**
-- Ensure your browser supports Web Audio API (all modern browsers do)
-- Try a different browser if issues persist
-
-**Music files not loading:**
-- Ensure the `/music/` folder is in the same directory as `index.html`
-- Check browser console for 404 errors
+## 🛠️ Development Notes
+- Static assets are served from `index.html` with React loaded via CDN.
+- Backend routes:
+  - `POST /api/generate-script`
+  - `POST /api/tts`
+  - `POST /api/mix`
+  - `GET /api/music-files`
+- Ensure `ffmpeg` is available on the host for audio mixing.
 
 ## 📄 License
-
 ISC
-
-## 🙏 Contributing
-
-Feel free to open issues or submit pull requests!
-
