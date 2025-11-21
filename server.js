@@ -12,13 +12,8 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
-app.use('/src', express.static(path.join(__dirname, 'src')));
 
-// Static serving of music folder
-app.use('/music', express.static(path.join(__dirname, 'music')));
-
-// API Routes
+// API Routes - MUST come before static file serving
 app.post('/api/generate-script', generateScript);
 app.post('/api/tts', tts);
 app.post('/api/mix', mix);
@@ -37,10 +32,19 @@ app.get('/api/music-files', (req, res) => {
   }
 });
 
-// Serve index.html for root route
+// Static serving of music folder
+app.use('/music', express.static(path.join(__dirname, 'music')));
+
+// Static file serving for src folder
+app.use('/src', express.static(path.join(__dirname, 'src')));
+
+// Serve index.html for root route (before catch-all static)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// Catch-all static file serving (must be last)
+app.use(express.static(path.join(__dirname)));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
