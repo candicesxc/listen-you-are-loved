@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
+app.options('*', cors());
 app.use(express.json());
 
 // API Routes - MUST come before static file serving
