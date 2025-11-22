@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: listen-you-are-loved
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false  # Set this manually in Render dashboard
+
