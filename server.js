@@ -4,39 +4,30 @@ const cors = require('cors');
 const path = require('path');
 const generateScript = require('./api/generate-script');
 const tts = require('./api/tts');
-const mix = require('./api/mix');
+// const mix = require('./api/mix'); // Not needed - mixing is done client-side
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-const corsConfig = {
-  origin: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
+// Enhanced CORS configuration for Render deployment
+app.use(cors({
+  origin: '*', // Allow all origins for deployment
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-};
+  credentials: true
+}));
 
-// Handle preflight early to avoid 405s from proxies or upstream servers
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.set({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': corsConfig.methods.join(', '),
-      'Access-Control-Allow-Headers': corsConfig.allowedHeaders.join(', '),
-    });
-    return res.sendStatus(204);
-  }
-  next();
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.sendStatus(200);
 });
 
-app.use(cors(corsConfig));
-app.options('*', cors(corsConfig));
 app.use(express.json());
 
 // API Routes - MUST come before static file serving
 app.post('/api/generate-script', generateScript);
 app.post('/api/tts', tts);
-app.post('/api/mix', mix);
+// app.post('/api/mix', mix); // Not needed - mixing is done client-side
 
 // List music files
 app.get('/api/music-files', (req, res) => {
@@ -74,6 +65,10 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`API Routes:`);
+  console.log(`  POST /api/generate-script`);
+  console.log(`  POST /api/tts`);
+  console.log(`  GET  /api/music-files`);
 });
 
