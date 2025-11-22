@@ -47,6 +47,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // API ROUTES - DEFINED EXPLICITLY FIRST
 // ============================================
 
+// Root test endpoint - to verify server is working
+app.get('/test', (req, res) => {
+  console.log('✓ Root test endpoint hit');
+  res.json({ 
+    message: 'Server is working!',
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
+});
+
 // Health check - simplest route to test
 app.get('/api/health', (req, res) => {
   console.log('✓ Health check endpoint hit');
@@ -56,7 +66,9 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     openai_configured: !!process.env.OPENAI_API_KEY,
     port: PORT,
-    path: req.path
+    path: req.path,
+    method: req.method,
+    url: req.url
   });
 });
 

@@ -4,6 +4,8 @@ services:
     env: node
     buildCommand: npm install
     startCommand: npm start
+    plan: free  # or starter, standard, etc.
+    region: oregon  # or other regions
     envVars:
       - key: NODE_ENV
         value: production
