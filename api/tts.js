@@ -1,18 +1,28 @@
 const OpenAI = require('openai');
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error('ERROR: OPENAI_API_KEY environment variable is not set');
-}
+let openai = null;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  if (openai) return openai;
+
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  return openai;
+}
 
 module.exports = async (req, res) => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ 
-        error: 'Server configuration error: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.' 
+    const client = getOpenAIClient();
+
+    if (!client) {
+      return res.status(500).json({
+        error: 'Server configuration error: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.'
       });
     }
 
@@ -22,7 +32,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Missing script or voice' });
     }
 
-    const mp3 = await openai.audio.speech.create({
+    const mp3 = await client.audio.speech.create({
       model: 'tts-1',
       voice: voice,
       input: script,
