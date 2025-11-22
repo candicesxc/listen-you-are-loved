@@ -8,13 +8,21 @@ const tts = require('./api/tts');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Request logging middleware (for debugging)
+// ============================================
+// CRITICAL: Request logging FIRST
+// ============================================
 app.use((req, res, next) => {
+  console.log(`\n=================================`);
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log(`Original URL: ${req.originalUrl}`);
+  console.log(`Base URL: ${req.baseUrl}`);
+  console.log(`=================================\n`);
   next();
 });
 
-// Enhanced CORS configuration for Render deployment
+// ============================================
+// CORS - Must be early
+// ============================================
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -22,50 +30,39 @@ app.use(cors({
   credentials: true
 }));
 
-// Handle preflight OPTIONS requests FIRST
+// Handle OPTIONS preflight requests
 app.options('*', (req, res) => {
+  console.log('OPTIONS preflight request:', req.path);
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.sendStatus(200);
 });
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ============================================
-// API ROUTES - MUST BE DEFINED BEFORE STATIC
+// API ROUTES - DEFINED EXPLICITLY FIRST
 // ============================================
 
-// Explicitly reject non-POST/GET requests to /api/* with helpful error
-app.all('/api/*', (req, res, next) => {
-  // Log API requests
-  console.log(`API Request: ${req.method} ${req.path}`);
-  
-  // Only allow specific methods on /api routes
-  const allowedMethods = ['GET', 'POST', 'OPTIONS'];
-  if (!allowedMethods.includes(req.method)) {
-    console.log(`405 - Method ${req.method} not allowed for ${req.path}`);
-    return res.status(405).json({
-      error: `Method ${req.method} not allowed`,
-      allowedMethods: allowedMethods,
-      path: req.path
-    });
-  }
-  
-  next();
+// Health check - simplest route to test
+app.get('/api/health', (req, res) => {
+  console.log('✓ Health check endpoint hit');
+  res.json({ 
+    status: 'ok',
+    server: 'express',
+    timestamp: new Date().toISOString(),
+    openai_configured: !!process.env.OPENAI_API_KEY,
+    port: PORT,
+    path: req.path
+  });
 });
 
-// Script generation endpoint
-app.post('/api/generate-script', generateScript);
-
-// TTS endpoint  
-app.post('/api/tts', tts);
-
-// List music files endpoint
+// Music files endpoint
 app.get('/api/music-files', (req, res) => {
-  console.log('GET /api/music-files called');
+  console.log('✓ GET /api/music-files called');
   const fs = require('fs');
   const musicDir = path.join(__dirname, 'music');
   try {
@@ -74,76 +71,115 @@ app.get('/api/music-files', (req, res) => {
       .sort();
     res.json({ files });
   } catch (error) {
-    console.error('Error reading music directory:', error);
-    res.status(500).json({ error: 'Failed to read music directory' });
+    console.error('✗ Error reading music directory:', error);
+    res.status(500).json({ error: 'Failed to read music directory', details: error.message });
   }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    openai_configured: !!process.env.OPENAI_API_KEY 
+// Script generation endpoint
+app.post('/api/generate-script', generateScript);
+
+// TTS endpoint
+app.post('/api/tts', tts);
+
+// Catch-all for /api/* routes that don't match - return JSON error
+app.all('/api/*', (req, res) => {
+  console.log(`✗ API route not found: ${req.method} ${req.path}`);
+  res.status(404).json({
+    error: 'API endpoint not found',
+    path: req.path,
+    method: req.method,
+    availableRoutes: [
+      'GET /api/health',
+      'GET /api/music-files',
+      'POST /api/generate-script',
+      'POST /api/tts'
+    ]
   });
 });
 
 // ============================================
-// STATIC FILE SERVING - AFTER API ROUTES
+// STATIC FILE SERVING - ONLY AFTER API ROUTES
 // ============================================
 
+// Explicitly skip /api paths in static middleware
+app.use((req, res, next) => {
+  // NEVER serve /api/* as static files
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  // For all other paths, continue to static middleware
+  next();
+});
+
 // Serve music files
-app.use('/music', express.static(path.join(__dirname, 'music')));
+app.use('/music', express.static(path.join(__dirname, 'music'), {
+  index: false, // Don't serve index files
+  fallthrough: false // Don't fall through to next middleware
+}));
 
 // Serve src folder
-app.use('/src', express.static(path.join(__dirname, 'src')));
+app.use('/src', express.static(path.join(__dirname, 'src'), {
+  index: false,
+  fallthrough: false
+}));
 
-// Serve root files (only specific files, not catch-all)
+// Serve index.html for root
 app.get('/', (req, res) => {
+  console.log('✓ Serving index.html');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ============================================
-// ERROR HANDLING
+// 404 HANDLER - Must be last
 // ============================================
-
-// 404 handler - must be last
 app.use((req, res) => {
-  console.log(`404 - Route not found: ${req.method} ${req.path}`);
+  console.log(`✗ 404 - Route not found: ${req.method} ${req.path}`);
   
   // If it's an API route, return JSON
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ 
       error: 'API endpoint not found',
       path: req.path,
-      method: req.method
+      method: req.method,
+      availableRoutes: [
+        'GET /api/health',
+        'GET /api/music-files',
+        'POST /api/generate-script',
+        'POST /api/tts'
+      ]
     });
   }
   
-  // For other routes, return 404
+  // For other routes
   res.status(404).send('Not found');
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+  console.error('✗ Server error:', err);
+  if (!res.headersSent) {
+    res.status(err.status || 500).json({
+      error: err.message || 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+  }
 });
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n\n=================================`);
+  console.log(`🚀 SERVER STARTED`);
   console.log(`=================================`);
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Port: ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`OpenAI API Key configured: ${!!process.env.OPENAI_API_KEY}`);
+  console.log(`OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✓ Configured' : '✗ NOT SET'}`);
   console.log(`=================================`);
-  console.log(`API Routes:`);
+  console.log(`📋 REGISTERED API ROUTES:`);
+  console.log(`  GET  /api/health`);
+  console.log(`  GET  /api/music-files`);
   console.log(`  POST /api/generate-script`);
   console.log(`  POST /api/tts`);
-  console.log(`  GET  /api/music-files`);
-  console.log(`  GET  /api/health`);
   console.log(`=================================`);
+  console.log(`✅ Server is ready to accept requests\n\n`);
 });
