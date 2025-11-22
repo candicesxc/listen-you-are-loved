@@ -1,12 +1,20 @@
 const OpenAI = require('openai');
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error('ERROR: OPENAI_API_KEY environment variable is not set');
-}
+let openai = null;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  if (openai) return openai;
+
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  return openai;
+}
 
 const wordsPerSecond = 2;
 
@@ -19,9 +27,11 @@ const toneEndingRules = {
 
 module.exports = async (req, res) => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ 
-        error: 'Server configuration error: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.' 
+    const client = getOpenAIClient();
+
+    if (!client) {
+      return res.status(500).json({
+        error: 'Server configuration error: OPENAI_API_KEY not set. Please set the OPENAI_API_KEY environment variable.'
       });
     }
 
@@ -62,7 +72,7 @@ ${toneEndingRule}
 
 One paragraph. No bullets or breaks.`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
