@@ -10,7 +10,27 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+const corsConfig = {
+  origin: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Handle preflight early to avoid 405s from proxies or upstream servers
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': corsConfig.methods.join(', '),
+      'Access-Control-Allow-Headers': corsConfig.allowedHeaders.join(', '),
+    });
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+app.use(cors(corsConfig));
+app.options('*', cors(corsConfig));
 app.use(express.json());
 
 // API Routes - MUST come before static file serving
