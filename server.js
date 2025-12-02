@@ -89,6 +89,9 @@ app.get('/api/health', (req, res) => {
 // Serve music files
 app.use('/music', express.static(path.join(__dirname, 'music')));
 
+// Serve image assets
+app.use('/image', express.static(path.join(__dirname, 'image')));
+
 // Serve src folder
 app.use('/src', express.static(path.join(__dirname, 'src')));
 
