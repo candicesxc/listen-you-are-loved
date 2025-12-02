@@ -302,7 +302,21 @@ function App() {
   const [musicFiles, setMusicFiles] = useState([]);
   const [started, setStarted] = useState(false);
 
-  const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+  const voices = [
+    { value: 'alloy', label: 'Alloy - warm neutral adult' },
+    { value: 'echo', label: 'Echo - calm adult male' },
+    { value: 'fable', label: 'Fable - gentle young female' },
+    { value: 'onyx', label: 'Onyx - deep adult male' },
+    { value: 'nova', label: 'Nova - bright young female' },
+    { value: 'shimmer', label: 'Shimmer - airy teen female' },
+  ];
+
+  const musicLabels = {
+    'ambient-background-2-421085.mp3': 'ambient',
+    'cheerful-joyful-playful-music-380550.mp3': 'cheerful',
+    'cinematic-ambient-348342.mp3': 'cinematic',
+    'lullaby-acoustic-guitar-438657.mp3': 'lullaby',
+  };
 
   // Helper function to safely parse JSON responses
   const parseJsonResponse = async (response) => {
@@ -357,7 +371,6 @@ function App() {
       .then(data => {
         if (data.files && data.files.length > 0) {
           setMusicFiles(data.files);
-          setBackgroundMusic(data.files[0]);
         }
       })
       .catch(err => {
@@ -370,42 +383,8 @@ function App() {
           'lullaby-acoustic-guitar-438657.mp3'
         ];
         setMusicFiles(fallbackFiles);
-        setBackgroundMusic(fallbackFiles[0]);
       });
   }, []);
-
-  const testVoice = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Call backend TTS API
-      const response = await fetchWithFallback('/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          script: 'Hello',
-          voice: voice,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorMessage = await handleErrorResponse(response);
-        throw new Error(errorMessage || 'Failed to generate test voice');
-      }
-
-      const data = await parseJsonResponse(response);
-      const deliveryAgent = new DeliveryAgent();
-      const { audioUrl } = deliveryAgent.deliver(data.audio, data.format || 'mp3');
-      setAudioUrl(audioUrl);
-    } catch (err) {
-      setError(err.message || 'Failed to generate test voice');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const generateScript = async () => {
     if (!persona) {
@@ -525,6 +504,13 @@ function App() {
       <div className="frame landing-frame">
         <div className="decorative-frame">
           <h1 className="dynapuff-main">Listen, You Are Loved</h1>
+          <div className="hero-illustration-wrap">
+            <img
+              src="/image/listen-logo.svg"
+              alt="Heart and ear illustration"
+              className="hero-illustration"
+            />
+          </div>
           <p className="description lexend-body">
             Customize their tone, who they speak as, the words they use, and the sound of the voice itself, then let them read
             your personalized affirmations aloud with gentle care.
@@ -596,7 +582,7 @@ function App() {
 
             <div className="form-section">
               <label htmlFor="duration">Duration (seconds)</label>
-              <p className="helper-text">Decide how long the message should last before it is written.</p>
+              <p className="helper-text">Decide how long the audio should roughly last.</p>
               <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
                 {Array.from({ length: 11 }, (_, i) => (i + 2) * 10).map(sec => (
                   <option key={sec} value={sec}>{sec}s</option>
@@ -633,55 +619,50 @@ function App() {
                 </div>
 
                 <div className="form-grid narrow">
+                <div className="form-section">
+                  <label htmlFor="voice">Voice selection</label>
+                  <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
+                    {voices.map(v => (
+                      <option key={v.value} value={v.value}>{v.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-section">
+                  <label htmlFor="backgroundMusic">Background music selection</label>
+                  <select
+                    id="backgroundMusic"
+                    value={backgroundMusic}
+                    onChange={(e) => setBackgroundMusic(e.target.value)}
+                  >
+                    <option value="">No background music</option>
+                    {musicFiles.map(file => {
+                      const label = musicLabels[file] || file.replace('.mp3', '').replace(/-/g, ' ');
+                      return (
+                        <option key={file} value={file}>{label}</option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {backgroundMusic && (
                   <div className="form-section">
-                    <label htmlFor="voice">Voice selection</label>
-                    <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
-                      {voices.map(v => (
-                        <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
-                      ))}
-                    </select>
-                    <div className="voice-preview">
-                      <button className="test-voice-btn" onClick={testVoice} disabled={loading}>
-                        Test Voice
-                      </button>
-                      <span className="lexend-body" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-                        Says "Hello" to preview the voice
-                      </span>
+                    <label htmlFor="musicVolume">Background music volume</label>
+                    <p className="helper-text">Scale ranges from 0% to 100%, where 100% plays the track at half its original volume.</p>
+                    <div className="slider-container">
+                      <input
+                        type="range"
+                        id="musicVolume"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={Math.round(musicVolume * 100)}
+                        onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
+                      />
+                      <span className="volume-value lexend-body">{Math.round(musicVolume * 100)}%</span>
                     </div>
                   </div>
-
-                  <div className="form-section">
-                    <label htmlFor="backgroundMusic">Background music selection</label>
-                    <select
-                      id="backgroundMusic"
-                      value={backgroundMusic}
-                      onChange={(e) => setBackgroundMusic(e.target.value)}
-                    >
-                      <option value="">None</option>
-                      {musicFiles.map(file => (
-                        <option key={file} value={file}>{file.replace('.mp3', '').replace(/-/g, ' ')}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {backgroundMusic && (
-                    <div className="form-section">
-                      <label htmlFor="musicVolume">Background music volume</label>
-                      <p className="helper-text">Starts at 50% of the voice. Slide left to make it even softer.</p>
-                      <div className="slider-container">
-                        <input
-                          type="range"
-                          id="musicVolume"
-                          min="0"
-                          max="1"
-                          step="0.05"
-                          value={musicVolume}
-                          onChange={(e) => setMusicVolume(Number(e.target.value))}
-                        />
-                        <span className="volume-value lexend-body">{Math.round(musicVolume * 50)}%</span>
-                      </div>
-                    </div>
-                  )}
+                )}
                 </div>
 
                 <div className="button-group">
