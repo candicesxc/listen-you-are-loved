@@ -30,7 +30,14 @@ app.use(express.urlencoded({ extended: true }));
 // API ROUTES - MUST BE DEFINED BEFORE STATIC
 // ============================================
 
-// Handle preflight OPTIONS requests for API routes
+// Middleware to ensure all API responses are JSON
+app.use('/api', (req, res, next) => {
+  // Set JSON content type for all API responses
+  res.set('Content-Type', 'application/json');
+  next();
+});
+
+// Handle preflight OPTIONS requests for all API routes
 app.options('/api/*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -38,30 +45,17 @@ app.options('/api/*', (req, res) => {
   res.sendStatus(200);
 });
 
-// API route middleware - log and validate methods
-app.use('/api', (req, res, next) => {
-  // Log API requests
-  console.log(`API Request: ${req.method} ${req.path}`);
-  
-  // Only allow specific methods on /api routes
-  const allowedMethods = ['GET', 'POST', 'OPTIONS'];
-  if (!allowedMethods.includes(req.method)) {
-    console.log(`405 - Method ${req.method} not allowed for ${req.path}`);
-    return res.status(405).json({
-      error: `Method ${req.method} not allowed`,
-      allowedMethods: allowedMethods,
-      path: req.path
-    });
-  }
-  
-  next();
-});
-
 // Script generation endpoint
-app.post('/api/generate-script', generateScript);
+app.post('/api/generate-script', (req, res, next) => {
+  console.log('POST /api/generate-script called');
+  next();
+}, generateScript);
 
 // TTS endpoint  
-app.post('/api/tts', tts);
+app.post('/api/tts', (req, res, next) => {
+  console.log('POST /api/tts called');
+  next();
+}, tts);
 
 // List music files endpoint
 app.get('/api/music-files', (req, res) => {
@@ -111,7 +105,7 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
   console.log(`404 - Route not found: ${req.method} ${req.path}`);
   
-  // If it's an API route, return JSON
+  // Always return JSON for API routes
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ 
       error: 'API endpoint not found',
@@ -120,7 +114,7 @@ app.use((req, res) => {
     });
   }
   
-  // For other routes, return 404
+  // For other routes, return 404 HTML
   res.status(404).send('Not found');
 });
 
