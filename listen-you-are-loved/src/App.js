@@ -15,9 +15,12 @@ const sameOriginApi = '/api';
 const isLocalhost = typeof window !== 'undefined' && /localhost|127\.0\.0\.1/.test(window.location.hostname);
 const API_BASES = isLocalhost ? [sameOriginApi, REMOTE_API_BASE] : [REMOTE_API_BASE, sameOriginApi];
 
+// Resolve the base path where the app is served (e.g., /listen-you-are-loved)
+const APP_BASE_PATH = '/listen-you-are-loved';
+
 // Music asset bases mirror the API ordering so production prefers the hosted backend first
 const MUSIC_BASES = API_BASES.map(base => base.replace(/\/?api$/, '')).concat(
-  typeof window !== 'undefined' ? [window.location.origin] : []
+  typeof window !== 'undefined' ? [`${window.location.origin}${APP_BASE_PATH}`] : []
 );
 
 async function fetchWithFallback(path, options = {}) {

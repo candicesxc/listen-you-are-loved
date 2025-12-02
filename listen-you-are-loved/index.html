@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listen, You Are Loved</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Lexend", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 300;
+      font-style: normal;
+      background: linear-gradient(135deg, #FBFAF5 0%, #F7DDE2 50%, #F6E7C6 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #3E3A52;
+    }
+
+    .dynapuff-main {
+      font-family: "DynaPuff", system-ui;
+      font-optical-sizing: auto;
+      font-weight: 600;
+      font-style: normal;
+      font-variation-settings: "wdth" 100;
+    }
+
+    .lexend-body {
+      font-family: "Lexend", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 300;
+      font-style: normal;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .frame {
+      background: rgba(251, 250, 245, 0.95);
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: 0 20px 60px rgba(62, 58, 82, 0.1);
+      border: 2px solid rgba(239, 187, 207, 0.6);
+    }
+
+    .landing-frame .decorative-frame {
+      border: 3px solid #EFBBCF;
+      border-radius: 20px;
+      padding: 28px;
+      background: linear-gradient(180deg, rgba(247, 221, 226, 0.2) 0%, rgba(246, 231, 198, 0.2) 100%);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      color: #3E3A52;
+      text-align: center;
+    }
+
+    .section-header h2,
+    .section-header h3 {
+      margin-bottom: 8px;
+    }
+
+    .description {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #3E3A52;
+      opacity: 0.9;
+    }
+
+    .hero-illustration-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .hero-illustration {
+      max-width: 360px;
+      width: 65%;
+      height: auto;
+      filter: drop-shadow(0 6px 20px rgba(62, 58, 82, 0.12));
+    }
+
+    .cta-row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-top: 12px;
+    }
+
+    .form-grid.narrow {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .section-header {
+      margin-bottom: 10px;
+    }
+
+    .section-header.compact {
+      margin-bottom: 4px;
+      margin-top: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      color: #3E3A52;
+      font-size: 0.95rem;
+    }
+
+    .helper-text {
+      font-size: 0.9rem;
+      color: #544B63;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #EFBBCF;
+      border-radius: 12px;
+      font-family: "Lexend", sans-serif;
+      font-size: 1rem;
+      background: #FBFAF5;
+      color: #3E3A52;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #C59A8A;
+      box-shadow: 0 0 0 3px rgba(197, 154, 138, 0.1);
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #EFBBCF;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #C59A8A;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #C59A8A;
+      cursor: pointer;
+      border: none;
+    }
+
+    .volume-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-family: "Lexend", sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #EFBBCF 0%, #C59A8A 100%);
+      color: #3E3A52;
+      flex: 0 0 auto;
+      box-shadow: 0 8px 20px rgba(197, 154, 138, 0.2);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 10px 24px rgba(197, 154, 138, 0.26);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: #F6E7C6;
+      color: #3E3A52;
+    }
+
+    .btn-secondary:hover {
+      background: #F7DDE2;
+    }
+
+    .post-script {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .script-editor textarea {
+      min-height: 180px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .audio-section {
+      margin-top: 24px;
+      padding: 24px;
+      background: rgba(246, 231, 198, 0.3);
+      border-radius: 16px;
+    }
+
+    .audio-player {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .download-btn {
+      width: 100%;
+      padding: 14px;
+      background: #C59A8A;
+      color: #FBFAF5;
+      border: none;
+      border-radius: 12px;
+      font-family: "Lexend", sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .download-btn:hover {
+      background: #3E3A52;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #C59A8A;
+    }
+
+    .error {
+      background: rgba(239, 187, 207, 0.3);
+      border: 2px solid #EFBBCF;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      color: #3E3A52;
+    }
+
+    @media (max-width: 640px) {
+      .frame {
+        padding: 26px;
+      }
+
+      h1 {
+        font-size: 2.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" src="./src/App.js"></script>
+</body>
+</html>
+

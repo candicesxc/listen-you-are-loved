@@ -7,6 +7,7 @@ const tts = require('./api/tts');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const APP_DIR = path.join(__dirname, 'listen-you-are-loved');
 
 // Request logging middleware (for debugging)
 app.use((req, res, next) => {
@@ -61,7 +62,7 @@ app.post('/api/tts', (req, res, next) => {
 app.get('/api/music-files', (req, res) => {
   console.log('GET /api/music-files called');
   const fs = require('fs');
-  const musicDir = path.join(__dirname, 'music');
+  const musicDir = path.join(APP_DIR, 'music');
   try {
     const files = fs.readdirSync(musicDir)
       .filter(file => file.endsWith('.mp3'))
@@ -86,14 +87,13 @@ app.get('/api/health', (req, res) => {
 // STATIC FILE SERVING - AFTER API ROUTES
 // ============================================
 
-// Serve music files
-app.use('/music', express.static(path.join(__dirname, 'music')));
+// Serve static frontend from its subdirectory
+app.use('/listen-you-are-loved', express.static(APP_DIR));
 
-// Serve image assets
-app.use('/image', express.static(path.join(__dirname, 'image')));
-
-// Serve src folder
-app.use('/src', express.static(path.join(__dirname, 'src')));
+// Serve app entry
+app.get(['/listen-you-are-loved', '/listen-you-are-loved/'], (req, res) => {
+  res.sendFile(path.join(APP_DIR, 'index.html'));
+});
 
 // Serve root files (only specific files, not catch-all)
 app.get('/', (req, res) => {
