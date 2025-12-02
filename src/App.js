@@ -9,13 +9,16 @@ const toneEndingRules = {
   motivational: 'ends with confident encouragement',
 };
 
-// API base URLs - try same-origin first, then Render fallback
-const API_BASES = Array.from(new Set([
-  '/api',
-  'https://listen-you-are-loved.onrender.com/api',
-]))
-  // Keep consistent ordering: prefer same-origin for deployed app
-  .sort((a, b) => (a.startsWith('http') ? 1 : -1));
+// API and asset base URLs with environment-aware ordering
+const REMOTE_API_BASE = 'https://listen-you-are-loved.onrender.com/api';
+const sameOriginApi = '/api';
+const isLocalhost = typeof window !== 'undefined' && /localhost|127\.0\.0\.1/.test(window.location.hostname);
+const API_BASES = isLocalhost ? [sameOriginApi, REMOTE_API_BASE] : [REMOTE_API_BASE, sameOriginApi];
+
+// Music asset bases mirror the API ordering so production prefers the hosted backend first
+const MUSIC_BASES = API_BASES.map(base => base.replace(/\/?api$/, '')).concat(
+  typeof window !== 'undefined' ? [window.location.origin] : []
+);
 
 async function fetchWithFallback(path, options = {}) {
   let lastError = null;
@@ -81,7 +84,7 @@ class MusicAgent {
       // Load and decode both sources
       const [ttsBuffer, musicBuffer] = await Promise.all([
         this.loadAudio(audioContext, ttsUrl),
-        this.loadAudio(audioContext, `/music/${backgroundTrackFilename}`),
+        this.loadMusicWithFallback(audioContext, `/music/${backgroundTrackFilename}`),
       ]);
 
       const outputDuration = ttsBuffer.duration + musicTailSeconds;
@@ -135,6 +138,27 @@ class MusicAgent {
       .catch(err => {
         throw new Error(`Unable to decode audio data from ${url}: ${err.message}`);
       });
+  }
+
+  async loadMusicWithFallback(audioContext, path) {
+    let lastError = null;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+    for (const base of MUSIC_BASES) {
+      const url = `${base}${normalizedPath}`;
+      try {
+        const buffer = await this.loadAudio(audioContext, url);
+        return buffer;
+      } catch (err) {
+        lastError = err;
+        // Retry other bases only on common routing errors (404/405)
+        if (!(err.message.includes('(404)') || err.message.includes('(405)'))) {
+          break;
+        }
+      }
+    }
+
+    throw lastError || new Error(`Unable to load music from ${path}`);
   }
 
   base64ToBlob(base64, mimeType) {
