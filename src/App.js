@@ -67,68 +67,60 @@ class ProofAgent {
 // MusicAgent - handles client-side audio mixing
 class MusicAgent {
   async mix(ttsAudioBase64, backgroundTrackFilename, musicVolume) {
-    return new Promise((resolve, reject) => {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      // Load TTS audio
-      const ttsBlob = this.base64ToBlob(ttsAudioBase64, 'audio/mpeg');
-      const ttsUrl = URL.createObjectURL(ttsBlob);
-      
-      // Load background music from server
-      const musicUrl = `/music/${backgroundTrackFilename}`;
-      
-      Promise.all([
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    const effectiveMusicVolume = 0.5 * Math.max(0, Math.min(musicVolume ?? 1, 1));
+    const fadeSeconds = 2;
+    const musicTailSeconds = 5;
+
+    // Load TTS audio
+    const ttsBlob = this.base64ToBlob(ttsAudioBase64, 'audio/mpeg');
+    const ttsUrl = URL.createObjectURL(ttsBlob);
+
+    try {
+      // Load and decode both sources
+      const [ttsBuffer, musicBuffer] = await Promise.all([
         this.loadAudio(audioContext, ttsUrl),
-        this.loadAudio(audioContext, musicUrl),
-      ]).then(([ttsBuffer, musicBuffer]) => {
-        // Create source nodes
-        const ttsSource = audioContext.createBufferSource();
-        const musicSource = audioContext.createBufferSource();
-        
-        ttsSource.buffer = ttsBuffer;
-        musicSource.buffer = musicBuffer;
-        
-        // Create gain nodes for volume control
-        const ttsGain = audioContext.createGain();
-        const musicGain = audioContext.createGain();
-        
-        ttsGain.gain.value = 1.0;
-        musicGain.gain.value = musicVolume || 0.3;
-        
-        // Create destination for recording (don't connect to audioContext.destination)
-        const destination = audioContext.createMediaStreamDestination();
-        
-        // Connect nodes to recording destination only
-        ttsSource.connect(ttsGain);
-        musicSource.connect(musicGain);
-        ttsGain.connect(destination);
-        musicGain.connect(destination);
-        
-        // Record the mixed audio
-        const mediaRecorder = new MediaRecorder(destination.stream);
-        const chunks = [];
-        
-        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'audio/webm' });
-          this.blobToBase64(blob).then(base64 => {
-            URL.revokeObjectURL(ttsUrl);
-            resolve(base64);
-          });
-        };
-        
-        mediaRecorder.start();
-        ttsSource.start(0);
-        musicSource.start(0);
-        
-        const duration = Math.max(ttsBuffer.duration, musicBuffer.duration) * 1000;
-        setTimeout(() => {
-          mediaRecorder.stop();
-          ttsSource.stop();
-          musicSource.stop();
-        }, duration + 100);
-      }).catch(reject);
-    });
+        this.loadAudio(audioContext, `/music/${backgroundTrackFilename}`),
+      ]);
+
+      const outputDuration = ttsBuffer.duration + musicTailSeconds;
+      const sampleRate = ttsBuffer.sampleRate || 44100;
+      const offlineContext = new OfflineAudioContext(2, Math.ceil(outputDuration * sampleRate), sampleRate);
+
+      // Voice source with fade-out toward the end
+      const ttsSource = offlineContext.createBufferSource();
+      const ttsGain = offlineContext.createGain();
+      ttsSource.buffer = ttsBuffer;
+      ttsGain.gain.setValueAtTime(1, 0);
+      const fadeStart = Math.max(ttsBuffer.duration - fadeSeconds, 0);
+      ttsGain.gain.setValueAtTime(1, fadeStart);
+      ttsGain.gain.linearRampToValueAtTime(0.001, ttsBuffer.duration);
+      ttsSource.connect(ttsGain).connect(offlineContext.destination);
+
+      // Music source loops quietly underneath and tails out after the voice
+      const musicSource = offlineContext.createBufferSource();
+      const musicGain = offlineContext.createGain();
+      musicSource.buffer = musicBuffer;
+      musicSource.loop = true;
+      musicGain.gain.setValueAtTime(effectiveMusicVolume, 0);
+      const musicFadeStart = Math.max(outputDuration - fadeSeconds, 0);
+      musicGain.gain.setValueAtTime(effectiveMusicVolume, musicFadeStart);
+      musicGain.gain.linearRampToValueAtTime(0.001, outputDuration);
+      musicSource.connect(musicGain).connect(offlineContext.destination);
+
+      ttsSource.start(0);
+      musicSource.start(0);
+      musicSource.stop(outputDuration);
+
+      const renderedBuffer = await offlineContext.startRendering();
+      URL.revokeObjectURL(ttsUrl);
+
+      return this.audioBufferToWavBase64(renderedBuffer);
+    } catch (err) {
+      URL.revokeObjectURL(ttsUrl);
+      throw err;
+    }
   }
 
   loadAudio(audioContext, url) {
@@ -150,7 +142,7 @@ class MusicAgent {
     const byteCharacters = atob(base64);
     const chunkSize = 8192;
     const byteArrays = [];
-    
+
     for (let i = 0; i < byteCharacters.length; i += chunkSize) {
       const chunk = byteCharacters.slice(i, i + chunkSize);
       const byteNumbers = new Array(chunk.length);
@@ -159,26 +151,82 @@ class MusicAgent {
       }
       byteArrays.push(new Uint8Array(byteNumbers));
     }
-    
+
     return new Blob(byteArrays, { type: mimeType });
   }
 
-  blobToBase64(blob) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1];
-        resolve(base64);
-      };
-      reader.readAsDataURL(blob);
+  audioBufferToWavBase64(audioBuffer) {
+    const wavBuffer = this.audioBufferToWav(audioBuffer);
+    const bytes = new Uint8Array(wavBuffer);
+    let binary = '';
+    bytes.forEach(byte => {
+      binary += String.fromCharCode(byte);
     });
+    return btoa(binary);
+  }
+
+  audioBufferToWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    const samples = buffer.length;
+    const blockAlign = numChannels * bitDepth / 8;
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = samples * blockAlign;
+    const bufferSize = 44 + dataSize;
+    const arrayBuffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(arrayBuffer);
+
+    const writeString = (offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    const channelData = [];
+    for (let channel = 0; channel < numChannels; channel++) {
+      channelData.push(buffer.getChannelData(channel));
+    }
+
+    let offset = 44;
+    for (let i = 0; i < samples; i++) {
+      for (let channel = 0; channel < numChannels; channel++) {
+        let sample = channelData[channel][i];
+        sample = Math.max(-1, Math.min(1, sample));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        offset += 2;
+      }
+    }
+
+    return arrayBuffer;
   }
 }
 
 class DeliveryAgent {
   deliver(audioBase64, format = 'mp3') {
-    // If it's webm from mixing, convert to blob directly
-    const mimeType = format === 'webm' ? 'audio/webm' : 'audio/mpeg';
+    // If it's webm/wav from mixing, convert to blob directly
+    const mimeType =
+      format === 'webm'
+        ? 'audio/webm'
+        : format === 'wav'
+          ? 'audio/wav'
+          : 'audio/mpeg';
+
     const audioBlob = this.base64ToBlob(audioBase64, mimeType);
     const audioUrl = URL.createObjectURL(audioBlob);
     return { audioUrl, audioBlob };
@@ -222,7 +270,7 @@ function App() {
   const [duration, setDuration] = useState(60);
   const [voice, setVoice] = useState('alloy');
   const [backgroundMusic, setBackgroundMusic] = useState('');
-  const [musicVolume, setMusicVolume] = useState(0.3);
+  const [musicVolume, setMusicVolume] = useState(1);
   const [script, setScript] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -416,7 +464,7 @@ function App() {
         try {
           const musicAgent = new MusicAgent();
           finalAudioBase64 = await musicAgent.mix(finalAudioBase64, backgroundMusic, musicVolume);
-          finalFormat = 'webm';
+          finalFormat = 'wav';
         } catch (mixError) {
           console.warn('Falling back to voice-only audio:', mixError);
           setError('Background music could not be mixed. Playing the voice-only version instead.');
@@ -437,7 +485,13 @@ function App() {
   const downloadAudio = () => {
     if (window.currentAudioBlob) {
       const deliveryAgent = new DeliveryAgent();
-      const filename = `affirmation-${Date.now()}.${window.currentAudioBlob.type.includes('webm') ? 'webm' : 'mp3'}`;
+      const filename = `affirmation-${Date.now()}.${
+        window.currentAudioBlob.type.includes('webm')
+          ? 'webm'
+          : window.currentAudioBlob.type.includes('wav')
+            ? 'wav'
+            : 'mp3'
+      }`;
       deliveryAgent.download(window.currentAudioBlob, filename);
     }
   };
@@ -589,17 +643,18 @@ function App() {
                   {backgroundMusic && (
                     <div className="form-section">
                       <label htmlFor="musicVolume">Background music volume</label>
+                      <p className="helper-text">Starts at 50% of the voice. Slide left to make it even softer.</p>
                       <div className="slider-container">
                         <input
                           type="range"
                           id="musicVolume"
                           min="0"
                           max="1"
-                          step="0.1"
+                          step="0.05"
                           value={musicVolume}
                           onChange={(e) => setMusicVolume(Number(e.target.value))}
                         />
-                        <span className="volume-value lexend-body">{Math.round(musicVolume * 100)}%</span>
+                        <span className="volume-value lexend-body">{Math.round(musicVolume * 50)}%</span>
                       </div>
                     </div>
                   )}
