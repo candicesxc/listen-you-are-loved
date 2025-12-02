@@ -1,0 +1,14 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Heart and ear listening illustration">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f9f3e9" />
+      <stop offset="100%" stop-color="#f9f3e9" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)" rx="40" />
+  <path d="M620 280c-86 0-156 66-156 147 0 120 156 219 156 219s156-99 156-219c0-81-70-147-156-147Z" fill="#bc5c46" />
+  <path d="M1015 240c132 0 207 125 160 238-36 88-134 164-240 139-76-17-90-107-38-150 44-37 100-12 102 39 1 19-12 45-45 52 37 28 92 12 123-23 67-76 26-204-62-215-67-9-120 46-133 126-7 43-65 61-96 26-24-27-11-77 4-110 45-96 129-122 225-122Z" fill="none" stroke="#c29657" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M902 420c22-56 64-96 138-96" fill="none" stroke="#c29657" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M420 540c90-44 140-24 210-4 78 22 170 36 230-8 80-60 170-72 280 10" fill="none" stroke="#c29657" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1422 810l42-14-42-14 14-42-14 42-42-14 42 14-14 42z" fill="#e7d5b8" />
+</svg>
