@@ -220,6 +220,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [musicFiles, setMusicFiles] = useState([]);
+  const [started, setStarted] = useState(false);
 
   const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
@@ -365,45 +366,6 @@ function App() {
     }
   };
 
-  const polishScript = async () => {
-    if (!script) {
-      setError('Please generate a script first');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Use generate-script API with polish instructions
-      const response = await fetchWithFallback('/generate-script', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          persona,
-          name,
-          instructions: `Polish and refine this script: ${script}`,
-          tone,
-          durationSeconds: duration,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorMessage = await handleErrorResponse(response);
-        throw new Error(errorMessage || 'Failed to polish script');
-      }
-
-      const data = await parseJsonResponse(response);
-      setScript(data.script);
-    } catch (err) {
-      setError(err.message || 'Failed to polish script');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const generateAudio = async () => {
     if (!script) {
       setError('Please generate a script first');
@@ -468,164 +430,199 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <h1 className="dynapuff-main">Listen, You Are Loved</h1>
-      <p className="description lexend-body">
-        Customize their tone, who they speak as, the words they use, and the sound of the voice itself, 
-        then let them read your personalized affirmations aloud with gentle care.
-        <br /><br />
-        With each listen, you will feel a little more centered, a little more supported, 
-        and a little more connected to the comfort you deserve.
-      </p>
-
-      <div className="form-section">
-        <label htmlFor="persona">Persona *</label>
-        <input
-          type="text"
-          id="persona"
-          value={persona}
-          onChange={(e) => setPersona(e.target.value)}
-          placeholder="e.g., A gentle grandmother, A wise friend, A caring mentor"
-        />
-      </div>
-
-      <div className="form-section">
-        <label htmlFor="name">Optional Name</label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name to use gently in affirmations"
-        />
-      </div>
-
-      <div className="form-section">
-        <label htmlFor="instructions">Custom Instructions</label>
-        <textarea
-          id="instructions"
-          value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Any specific guidance for the affirmation style..."
-        />
-      </div>
-
-      <div className="form-section">
-        <label htmlFor="tone">Tone</label>
-        <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)}>
-          <option value="cheerful">Cheerful</option>
-          <option value="lullaby">Lullaby</option>
-          <option value="calm">Calm</option>
-          <option value="motivational">Motivational</option>
-        </select>
-      </div>
-
-      <div className="form-section">
-        <label htmlFor="duration">Duration (seconds)</label>
-        <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-          {Array.from({ length: 11 }, (_, i) => (i + 2) * 10).map(sec => (
-            <option key={sec} value={sec}>{sec}s</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="form-section">
-        <label htmlFor="voice">Voice</label>
-        <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
-          {voices.map(v => (
-            <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
-          ))}
-        </select>
-        <div className="voice-preview">
-          <button className="test-voice-btn" onClick={testVoice} disabled={loading}>
-            Test Voice
-          </button>
-          <span className="lexend-body" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-            Says "Hello" to preview the voice
-          </span>
-        </div>
-      </div>
-
-      <div className="form-section">
-        <label htmlFor="backgroundMusic">Background Music</label>
-        <select 
-          id="backgroundMusic" 
-          value={backgroundMusic} 
-          onChange={(e) => setBackgroundMusic(e.target.value)}
-        >
-          <option value="">None</option>
-          {musicFiles.map(file => (
-            <option key={file} value={file}>{file.replace('.mp3', '').replace(/-/g, ' ')}</option>
-          ))}
-        </select>
-      </div>
-
-      {backgroundMusic && (
-        <div className="form-section">
-          <label htmlFor="musicVolume">Background Music Volume</label>
-          <div className="slider-container">
-            <input
-              type="range"
-              id="musicVolume"
-              min="0"
-              max="1"
-              step="0.1"
-              value={musicVolume}
-              onChange={(e) => setMusicVolume(Number(e.target.value))}
-            />
-            <span className="volume-value lexend-body">{Math.round(musicVolume * 100)}%</span>
-          </div>
-        </div>
-      )}
-
-
-      <div className="button-group">
-        <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading}>
-          Generate Script
-        </button>
-      </div>
-
-      {script && (
-        <div className="script-editor">
-          <label htmlFor="script">Script</label>
-          <textarea
-            id="script"
-            value={script}
-            onChange={(e) => setScript(e.target.value)}
-            placeholder="Generated script will appear here..."
-          />
-          <div className="button-group" style={{ marginTop: '12px' }}>
-            <button className="btn-secondary lexend-body" onClick={polishScript} disabled={loading}>
-              Polish with AI
-            </button>
-            <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading}>
-              Generate Audio
+    <div className="page">
+      <div className="frame landing-frame">
+        <div className="decorative-frame">
+          <h1 className="dynapuff-main">Listen, You Are Loved</h1>
+          <p className="description lexend-body">
+            Customize their tone, who they speak as, the words they use, and the sound of the voice itself, then let them read
+            your personalized affirmations aloud with gentle care.
+            <br /><br />
+            With each listen, you will feel a little more centered, a little more supported, and a little more connected to the
+            comfort you deserve.
+          </p>
+          <div className="cta-row">
+            <button className="btn-primary lexend-body" onClick={() => setStarted(true)}>
+              Get Started
             </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {loading && (
-        <div className="loading lexend-body">
-          <p>Creating your affirmation...</p>
-        </div>
-      )}
+      {started && (
+        <div className="frame workspace-frame">
+          <div className="section-header">
+            <h2 className="dynapuff-main">Create your personalized affirmation</h2>
+            <p className="lexend-body helper-text">Begin by describing who is speaking and what they should talk about.</p>
+          </div>
 
-      {error && (
-        <div className="error lexend-body">
-          {error}
-        </div>
-      )}
+          <div className="form-grid">
+            <div className="form-section">
+              <label htmlFor="persona">Persona *</label>
+              <p className="helper-text">Who is speaking to you in this message.</p>
+              <input
+                type="text"
+                id="persona"
+                value={persona}
+                onChange={(e) => setPersona(e.target.value)}
+                placeholder="e.g., A gentle grandmother, a wise friend, a caring mentor"
+              />
+            </div>
 
-      {audioUrl && (
-        <div className="audio-section">
-          <h2 className="dynapuff-main" style={{ fontSize: '1.5rem', marginBottom: '16px' }}>
-            Your Affirmation
-          </h2>
-          <audio className="audio-player" controls src={audioUrl} />
-          <button className="download-btn lexend-body" onClick={downloadAudio}>
-            Download Audio
-          </button>
+            <div className="form-section">
+              <label htmlFor="name">Optional Name</label>
+              <p className="helper-text">Your preferred name to be addressed in the message.</p>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Name to use gently in affirmations"
+              />
+            </div>
+
+            <div className="form-section">
+              <label htmlFor="instructions">Custom Instructions</label>
+              <p className="helper-text">What you want the message to talk about.</p>
+              <textarea
+                id="instructions"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="Any specific guidance for the affirmation style..."
+              />
+            </div>
+
+            <div className="form-section">
+              <label htmlFor="tone">Tone</label>
+              <p className="helper-text">Choose the feeling that best fits the script.</p>
+              <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)}>
+                <option value="cheerful">Cheerful</option>
+                <option value="lullaby">Lullaby</option>
+                <option value="calm">Calm</option>
+                <option value="motivational">Motivational</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="button-group">
+            <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading}>
+              Generate Script
+            </button>
+          </div>
+
+          {script && (
+            <div className="post-script">
+              <div className="script-editor">
+                <label htmlFor="script">Script</label>
+                <p className="helper-text">You can edit or refine this script before generating the audio.</p>
+                <textarea
+                  id="script"
+                  value={script}
+                  onChange={(e) => setScript(e.target.value)}
+                  placeholder="Generated script will appear here..."
+                />
+              </div>
+
+              <div className="audio-setup">
+                <div className="section-header compact">
+                  <h3 className="dynapuff-main">Prepare your audio</h3>
+                  <p className="lexend-body helper-text">
+                    Set the timing, choose a voice, and add optional background music before generating.
+                  </p>
+                </div>
+
+                <div className="form-grid narrow">
+                  <div className="form-section">
+                    <label htmlFor="duration">Duration (seconds)</label>
+                    <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                      {Array.from({ length: 11 }, (_, i) => (i + 2) * 10).map(sec => (
+                        <option key={sec} value={sec}>{sec}s</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-section">
+                    <label htmlFor="voice">Voice selection</label>
+                    <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
+                      {voices.map(v => (
+                        <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+                      ))}
+                    </select>
+                    <div className="voice-preview">
+                      <button className="test-voice-btn" onClick={testVoice} disabled={loading}>
+                        Test Voice
+                      </button>
+                      <span className="lexend-body" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                        Says "Hello" to preview the voice
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="form-section">
+                    <label htmlFor="backgroundMusic">Background music selection</label>
+                    <select
+                      id="backgroundMusic"
+                      value={backgroundMusic}
+                      onChange={(e) => setBackgroundMusic(e.target.value)}
+                    >
+                      <option value="">None</option>
+                      {musicFiles.map(file => (
+                        <option key={file} value={file}>{file.replace('.mp3', '').replace(/-/g, ' ')}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {backgroundMusic && (
+                    <div className="form-section">
+                      <label htmlFor="musicVolume">Background music volume</label>
+                      <div className="slider-container">
+                        <input
+                          type="range"
+                          id="musicVolume"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={musicVolume}
+                          onChange={(e) => setMusicVolume(Number(e.target.value))}
+                        />
+                        <span className="volume-value lexend-body">{Math.round(musicVolume * 100)}%</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="button-group">
+                  <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading}>
+                    Generate Audio
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="loading lexend-body">
+              <p>Creating your affirmation...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="error lexend-body">
+              {error}
+            </div>
+          )}
+
+          {audioUrl && (
+            <div className="audio-section">
+              <h2 className="dynapuff-main" style={{ fontSize: '1.5rem', marginBottom: '16px' }}>
+                Your Affirmation
+              </h2>
+              <audio className="audio-player" controls src={audioUrl} />
+              <button className="download-btn lexend-body" onClick={downloadAudio}>
+                Download Audio
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
