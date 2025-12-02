@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Customize their tone, who they speak as, the words they use, and the sound of the voice itself, then let them read your personalized affirmations aloud with gentle care.",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"

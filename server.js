@@ -22,14 +22,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Handle preflight OPTIONS requests FIRST
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.sendStatus(200);
-});
-
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,8 +30,16 @@ app.use(express.urlencoded({ extended: true }));
 // API ROUTES - MUST BE DEFINED BEFORE STATIC
 // ============================================
 
-// Explicitly reject non-POST/GET requests to /api/* with helpful error
-app.all('/api/*', (req, res, next) => {
+// Handle preflight OPTIONS requests for API routes
+app.options('/api/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.sendStatus(200);
+});
+
+// API route middleware - log and validate methods
+app.use('/api', (req, res, next) => {
   // Log API requests
   console.log(`API Request: ${req.method} ${req.path}`);
   
