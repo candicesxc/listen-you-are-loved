@@ -9,8 +9,12 @@ const toneEndingRules = {
   motivational: 'ends with confident encouragement',
 };
 
-// API base URL - use relative path for same-origin requests
-const API_BASE = '/api';
+// API base URL - use Render backend when developing locally
+const API_BASE =
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'https://listen-you-are-loved.onrender.com/api'
+    : '/api';
 
 // ProofAgent - client-side validation only
 class ProofAgent {
