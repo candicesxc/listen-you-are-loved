@@ -59,17 +59,20 @@ That's it! The app is now running with your server-side API key.
 
 ```
 /
-├── index.html          # Main HTML file (entry point)
-├── server.js           # Express server
-├── .env.example        # Environment variable template
-├── package.json        # Dependencies
-├── /api/               # Backend API endpoints
+├── index.html              # Landing page for candiceshen.com
+├── server.js               # Express server
+├── .env.example            # Environment variable template
+├── package.json            # Dependencies
+├── /api/                   # Backend API endpoints
 │   ├── generate-script.js  # Script generation endpoint
 │   ├── tts.js              # Text-to-speech endpoint
 │   └── mix.js              # Audio mixing endpoint (optional)
-├── /music/             # Background music files
-└── /src/
-    └── App.js          # React frontend
+└── /listen-you-are-loved/  # Frontend app served from /listen-you-are-loved
+    ├── index.html          # React entry point
+    ├── /image/             # Static images
+    ├── /music/             # Background music files
+    └── /src/               # Frontend source
+        └── App.js          # React frontend
 ```
 
 ## 🔒 Security
