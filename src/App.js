@@ -133,8 +133,16 @@ class MusicAgent {
 
   loadAudio(audioContext, url) {
     return fetch(url)
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer));
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Unable to load audio from ${url} (${response.status})`);
+        }
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+      .catch(err => {
+        throw new Error(`Unable to decode audio data from ${url}: ${err.message}`);
+      });
   }
 
   base64ToBlob(base64, mimeType) {
@@ -405,9 +413,14 @@ function App() {
       
       // If background music is selected, mix it client-side
       if (backgroundMusic) {
-        const musicAgent = new MusicAgent();
-        finalAudioBase64 = await musicAgent.mix(finalAudioBase64, backgroundMusic, musicVolume);
-        finalFormat = 'webm';
+        try {
+          const musicAgent = new MusicAgent();
+          finalAudioBase64 = await musicAgent.mix(finalAudioBase64, backgroundMusic, musicVolume);
+          finalFormat = 'webm';
+        } catch (mixError) {
+          console.warn('Falling back to voice-only audio:', mixError);
+          setError('Background music could not be mixed. Playing the voice-only version instead.');
+        }
       }
 
       const deliveryAgent = new DeliveryAgent();
@@ -502,6 +515,16 @@ function App() {
                 <option value="motivational">Motivational</option>
               </select>
             </div>
+
+            <div className="form-section">
+              <label htmlFor="duration">Duration (seconds)</label>
+              <p className="helper-text">Decide how long the message should last before it is written.</p>
+              <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                {Array.from({ length: 11 }, (_, i) => (i + 2) * 10).map(sec => (
+                  <option key={sec} value={sec}>{sec}s</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="button-group">
@@ -527,20 +550,11 @@ function App() {
                 <div className="section-header compact">
                   <h3 className="dynapuff-main">Prepare your audio</h3>
                   <p className="lexend-body helper-text">
-                    Set the timing, choose a voice, and add optional background music before generating.
+                    Choose a voice and add optional background music before generating.
                   </p>
                 </div>
 
                 <div className="form-grid narrow">
-                  <div className="form-section">
-                    <label htmlFor="duration">Duration (seconds)</label>
-                    <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-                      {Array.from({ length: 11 }, (_, i) => (i + 2) * 10).map(sec => (
-                        <option key={sec} value={sec}>{sec}s</option>
-                      ))}
-                    </select>
-                  </div>
-
                   <div className="form-section">
                     <label htmlFor="voice">Voice selection</label>
                     <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
