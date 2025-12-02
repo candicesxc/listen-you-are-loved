@@ -506,7 +506,7 @@ function App() {
           <h1 className="dynapuff-main">Listen, You Are Loved</h1>
           <div className="hero-illustration-wrap">
             <img
-              src="/image/listen-logo.svg"
+              src="/image/listen-logo.png"
               alt="Heart and ear illustration"
               className="hero-illustration"
             />
