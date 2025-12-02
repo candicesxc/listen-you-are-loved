@@ -9,8 +9,37 @@ const toneEndingRules = {
   motivational: 'ends with confident encouragement',
 };
 
-// API base URL - use relative path for same-origin requests
-const API_BASE = '/api';
+// API base URLs - try same-origin first, then Render fallback
+const API_BASES = Array.from(new Set([
+  '/api',
+  'https://listen-you-are-loved.onrender.com/api',
+]))
+  // Keep consistent ordering: prefer same-origin for deployed app
+  .sort((a, b) => (a.startsWith('http') ? 1 : -1));
+
+async function fetchWithFallback(path, options = {}) {
+  let lastError = null;
+
+  for (const base of API_BASES) {
+    try {
+      const response = await fetch(`${base}${path}`, options);
+
+      // If the response is OK, or not a clear routing failure, return it
+      if (response.ok || (response.status !== 404 && response.status !== 405)) {
+        return response;
+      }
+
+      // 404/405 likely means the request hit the wrong service; try next base
+      lastError = new Error(`Fallback triggered for ${base}${path} (${response.status})`);
+    } catch (err) {
+      // Network/connection error - save and try next
+      lastError = err;
+    }
+  }
+
+  // If all attempts failed, throw the last captured error
+  throw lastError || new Error('API request failed');
+}
 
 // ProofAgent - client-side validation only
 class ProofAgent {
@@ -236,7 +265,7 @@ function App() {
 
   // Fetch music files from backend on mount
   useEffect(() => {
-    fetch(`${API_BASE}/music-files`)
+    fetchWithFallback('/music-files')
       .then(async res => {
         if (!res.ok) {
           const errorText = await res.text();
@@ -270,7 +299,7 @@ function App() {
       setError(null);
       
       // Call backend TTS API
-      const response = await fetch(`${API_BASE}/tts`, {
+      const response = await fetchWithFallback('/tts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -308,7 +337,7 @@ function App() {
       setError(null);
       
       // Call backend script generation API
-      const response = await fetch(`${API_BASE}/generate-script`, {
+      const response = await fetchWithFallback('/generate-script', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -347,7 +376,7 @@ function App() {
       setError(null);
       
       // Use generate-script API with polish instructions
-      const response = await fetch(`${API_BASE}/generate-script`, {
+      const response = await fetchWithFallback('/generate-script', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -392,7 +421,7 @@ function App() {
       }
 
       // Call backend TTS API
-      const ttsResponse = await fetch(`${API_BASE}/tts`, {
+      const ttsResponse = await fetchWithFallback('/tts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
