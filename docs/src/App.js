@@ -16,8 +16,8 @@ const isLocalhost = typeof window !== 'undefined' && /localhost|127\.0\.0\.1/.te
 const API_BASES = isLocalhost ? [sameOriginApi, REMOTE_API_BASE] : [REMOTE_API_BASE, sameOriginApi];
 
 // Resolve the base path where the app is served (e.g., /listen-you-are-loved)
-// We keep this fixed to ensure production assets remain addressable at
-// https://candiceshen.com/listen-you-are-loved/ and mirror that path for fallbacks.
+// Keep this fixed so production assets stay addressable when hosted as a
+// standard GitHub Pages project site (e.g., https://<username>.github.io/listen-you-are-loved/).
 const APP_BASE_PATH = '/listen-you-are-loved';
 
 // Music asset bases mirror the API ordering and always include the app base path

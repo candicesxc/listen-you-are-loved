@@ -59,7 +59,7 @@ That's it! The app is now running with your server-side API key.
 
 ```
 /
-├── index.html              # Landing page for candiceshen.com
+├── index.html              # Landing page for the GitHub Pages project site
 ├── server.js               # Express server
 ├── .env.example            # Environment variable template
 ├── package.json            # Dependencies
@@ -116,7 +116,8 @@ Make sure to set the `OPENAI_API_KEY` environment variable in your deployment pl
 ### GitHub Pages preview
 
 - The frontend lives in `/docs`, so you can point GitHub Pages at the `docs/` folder on the `main` branch.
-- You do **not** need to assign a custom domain to this repository—if `candiceshen.com` is already set on your user/organization site, the page will be reachable at `https://candiceshen.com/listen-you-are-loved/` without conflicts.
+- GitHub Pages can serve the frontend directly from the `docs/` folder on the `main` branch as a normal project page at `https://<username>.github.io/listen-you-are-loved/`.
+- You do **not** need a `CNAME` file or custom-domain setting in this repository—GitHub will automatically map the project page to `https://candiceshen.com/listen-you-are-loved/` if `candiceshen.com` is configured on your user/organization site.
 
 ## 🔧 How It Works
 
