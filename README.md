@@ -67,7 +67,7 @@ That's it! The app is now running with your server-side API key.
 │   ├── generate-script.js  # Script generation endpoint
 │   ├── tts.js              # Text-to-speech endpoint
 │   └── mix.js              # Audio mixing endpoint (optional)
-└── /listen-you-are-loved/  # Frontend app served from /listen-you-are-loved
+└── /docs/                  # Frontend app served to GitHub Pages
     ├── index.html          # React entry point
     ├── /image/             # Static images
     ├── /music/             # Background music files
@@ -112,6 +112,11 @@ Make sure to set the `OPENAI_API_KEY` environment variable in your deployment pl
 4. Deploy!
 
 **Note**: The app requires a Node.js backend to run, so static hosting (GitHub Pages, plain Vercel/Netlify) won't work. Use a platform that supports Node.js servers.
+
+### GitHub Pages preview
+
+- The frontend lives in `/docs`, so you can point GitHub Pages at the `docs/` folder on the `main` branch.
+- You do **not** need to assign a custom domain to this repository—if `candiceshen.com` is already set on your user/organization site, the page will be reachable at `https://candiceshen.com/listen-you-are-loved/` without conflicts.
 
 ## 🔧 How It Works
 

@@ -7,7 +7,8 @@ const tts = require('./api/tts');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const APP_DIR = path.join(__dirname, 'listen-you-are-loved');
+const APP_DIR = path.join(__dirname, 'docs');
+const APP_BASE_PATH = '/listen-you-are-loved';
 
 // Request logging middleware (for debugging)
 app.use((req, res, next) => {
@@ -87,17 +88,14 @@ app.get('/api/health', (req, res) => {
 // STATIC FILE SERVING - AFTER API ROUTES
 // ============================================
 
-// Serve static frontend from its subdirectory
-app.use('/listen-you-are-loved', express.static(APP_DIR));
+// Serve static frontend from both the base path and root so it works
+// when hosted as a project page (GitHub Pages) or directly on Render
+app.use(APP_BASE_PATH, express.static(APP_DIR));
+app.use(express.static(APP_DIR));
 
 // Serve app entry
-app.get(['/listen-you-are-loved', '/listen-you-are-loved/'], (req, res) => {
+app.get([APP_BASE_PATH, `${APP_BASE_PATH}/`, '/'], (req, res) => {
   res.sendFile(path.join(APP_DIR, 'index.html'));
-});
-
-// Serve root files (only specific files, not catch-all)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ============================================
