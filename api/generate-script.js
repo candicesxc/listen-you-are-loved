@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { persona, name, instructions, tone, durationSeconds } = req.body;
+    const { persona, name, instructions, tone, durationSeconds, language = 'en' } = req.body;
 
     if (!persona || !tone || !durationSeconds) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -43,6 +43,18 @@ module.exports = async (req, res) => {
 
     const targetWords = Math.round(durationSeconds * wordsPerSecond);
     const toneEndingRule = toneEndingRules[tone] || 'ends with gentle reassurance';
+    const languageInstruction =
+      language === 'zh'
+        ? '请用中文撰写完整的脚本，语言温暖、鼓励、治愈。'
+        : language === 'ko'
+          ? '전체 스크립트를 따뜻하고 위로가 되는 한국어로 작성하세요.'
+          : 'Write the full script in English with warmth and support.';
+    const toneEndingLanguageHint =
+      language === 'zh'
+        ? '用中文自然地表达结尾要求：'
+        : language === 'ko'
+          ? '아래 끝맺음 요구를 한국어로 자연스럽게 표현하세요:'
+          : 'End naturally while following this requirement:';
 
     const systemPrompt = `You write second-person affirmation scripts spoken from a specified persona.
 
@@ -56,7 +68,9 @@ Rules:
 - Write one continuous flowing paragraph.
 - Plain text only.`;
 
-    const userPrompt = `Write a continuous second-person affirmation script.
+    const userPrompt = `${languageInstruction}
+
+Write a continuous second-person affirmation script.
 
 Persona: ${persona}
 Instructions: ${instructions || 'None'}
@@ -67,7 +81,7 @@ Optional name: ${name || 'None'}
 
 Begin most lines with "You".
 Use the name only where it feels gentle and meaningful.
-End with the required tone-based closing line:
+${toneEndingLanguageHint}
 ${toneEndingRule}
 
 One paragraph. No bullets or breaks.`;
