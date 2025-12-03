@@ -17,6 +17,9 @@ function getOpenAIClient() {
 }
 
 const wordsPerSecond = 2;
+const toneWordRateMultipliers = {
+  lullaby: 0.7,
+};
 
 const toneEndingRules = {
   lullaby: 'must end with "good night" style line',
@@ -41,7 +44,8 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const targetWords = Math.round(durationSeconds * wordsPerSecond);
+    const rateMultiplier = toneWordRateMultipliers[tone] || 1;
+    const targetWords = Math.round(durationSeconds * wordsPerSecond * rateMultiplier);
     const toneEndingRule = toneEndingRules[tone] || 'ends with gentle reassurance';
     const languageInstruction =
       language === 'zh'
