@@ -41,7 +41,7 @@ const uiText = {
     backgroundMusicLabel: 'Background music selection',
     noBackgroundMusic: 'No background music',
     musicVolumeLabel: 'Background music volume',
-    musicVolumeHelper: 'Scale ranges from 0% to 100%, where 100% plays the track at half its original volume.',
+    musicVolumeHelper: '',
     generateAudio: 'Generate Audio',
     loadingText: 'Creating your affirmation...',
     affirmationHeading: 'Your Affirmation',
@@ -56,11 +56,11 @@ const uiText = {
   zh: {
     title: '听着，你被爱着',
     descriptionLine1:
-      '自定义语气、说话的人、措辞和声音，让他们温柔地朗读你专属的肯定语。',
+      '自定义语气、说话的人、措辞和声音，让他们温柔地朗读你专属的爱的箴言。',
     descriptionLine2:
       '每一次聆听，你都会更平静、更被支持，也更能感受到你应得的安慰。',
     getStarted: '开始体验',
-    sectionTitle: '创建你的专属肯定语',
+    sectionTitle: '创建你的专属爱的箴言',
     sectionSubtitle: '先描述是谁在对你说话，以及他们应该谈些什么。',
     personaLabel: '角色 *',
     personaHelper: '在这条信息中是谁在与你对话。',
@@ -70,7 +70,7 @@ const uiText = {
     namePlaceholder: '轻柔地使用的名字',
     instructionsLabel: '自定义提示',
     instructionsHelper: '你想让这条信息谈论什么。',
-    instructionsPlaceholder: '关于肯定语风格的具体要求...',
+    instructionsPlaceholder: '关于爱的箴言风格的具体要求...',
     toneLabel: '语气',
     toneHelper: '选择最符合脚本的感觉。',
     durationLabel: '时长（秒）',
@@ -84,10 +84,10 @@ const uiText = {
     backgroundMusicLabel: '背景音乐选择',
     noBackgroundMusic: '无背景音乐',
     musicVolumeLabel: '背景音乐音量',
-    musicVolumeHelper: '范围为 0% 到 100%，100% 表示以原音量的一半播放。',
+    musicVolumeHelper: '',
     generateAudio: '生成音频',
-    loadingText: '正在为你创建肯定语...',
-    affirmationHeading: '你的肯定语',
+    loadingText: '正在为你创建爱的箴言...',
+    affirmationHeading: '你的爱的箴言',
     downloadAudio: '下载音频',
     tones: {
       cheerful: '愉悦',
@@ -127,7 +127,7 @@ const uiText = {
     backgroundMusicLabel: '배경 음악 선택',
     noBackgroundMusic: '배경 음악 없음',
     musicVolumeLabel: '배경 음악 볼륨',
-    musicVolumeHelper: '0%부터 100%까지 조절하며, 100%는 원래 볼륨의 절반으로 재생돼요.',
+    musicVolumeHelper: '',
     generateAudio: '오디오 만들기',
     loadingText: '확언을 만드는 중이에요...',
     affirmationHeading: '나의 확언',
@@ -232,25 +232,22 @@ class MusicAgent {
       const sampleRate = ttsBuffer.sampleRate || 44100;
       const offlineContext = new OfflineAudioContext(2, Math.ceil(outputDuration * sampleRate), sampleRate);
 
-      // Voice source with fade-out toward the end
+      // Voice source stays at a constant level throughout
       const ttsSource = offlineContext.createBufferSource();
       const ttsGain = offlineContext.createGain();
       ttsSource.buffer = ttsBuffer;
       ttsGain.gain.setValueAtTime(1, 0);
-      const fadeStart = Math.max(ttsBuffer.duration - fadeSeconds, 0);
-      ttsGain.gain.setValueAtTime(1, fadeStart);
-      ttsGain.gain.linearRampToValueAtTime(0.001, ttsBuffer.duration);
       ttsSource.connect(ttsGain).connect(offlineContext.destination);
 
-      // Music source loops quietly underneath and tails out after the voice
+      // Music source loops quietly underneath and trails off after the voice
       const musicSource = offlineContext.createBufferSource();
       const musicGain = offlineContext.createGain();
       musicSource.buffer = musicBuffer;
       musicSource.loop = true;
       musicGain.gain.setValueAtTime(effectiveMusicVolume, 0);
-      const musicFadeStart = Math.max(outputDuration - fadeSeconds, 0);
+      const musicFadeStart = Math.max(ttsBuffer.duration - fadeSeconds, 0);
       musicGain.gain.setValueAtTime(effectiveMusicVolume, musicFadeStart);
-      musicGain.gain.linearRampToValueAtTime(0.001, outputDuration);
+      musicGain.gain.linearRampToValueAtTime(0.001, ttsBuffer.duration + musicTailSeconds);
       musicSource.connect(musicGain).connect(offlineContext.destination);
 
       ttsSource.start(0);
@@ -436,7 +433,7 @@ function App() {
   const [duration, setDuration] = useState(60);
   const [voice, setVoice] = useState('alloy');
   const [backgroundMusic, setBackgroundMusic] = useState('');
-  const [musicVolume, setMusicVolume] = useState(1);
+  const [musicVolume, setMusicVolume] = useState(0.15);
   const [script, setScript] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -671,6 +668,8 @@ function App() {
               src="image/listen-logo.png"
               alt="Heart and ear illustration"
               className="hero-illustration"
+              loading="eager"
+              fetchpriority="high"
               onError={e => {
                 // Fallback to SVG if the PNG isn't available (e.g., when hosted separately)
                 if (!e.target.dataset.fallback) {
@@ -813,7 +812,9 @@ function App() {
                 {backgroundMusic && (
                   <div className="form-section">
                     <label htmlFor="musicVolume">{text.musicVolumeLabel}</label>
-                    <p className="helper-text">{text.musicVolumeHelper}</p>
+                    {text.musicVolumeHelper && (
+                      <p className="helper-text">{text.musicVolumeHelper}</p>
+                    )}
                     <div className="slider-container">
                       <input
                         type="range"
