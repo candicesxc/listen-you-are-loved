@@ -9,6 +9,138 @@ const toneEndingRules = {
   motivational: 'ends with confident encouragement',
 };
 
+const uiText = {
+  en: {
+    title: 'Listen, You Are Loved',
+    descriptionLine1:
+      'Customize their tone, who they speak as, the words they use, and the sound of the voice itself, then let them read your personalized affirmations aloud with gentle care.',
+    descriptionLine2:
+      'With each listen, you will feel a little more centered, a little more supported, and a little more connected to the comfort you deserve.',
+    getStarted: 'Get Started',
+    sectionTitle: 'Create your personalized affirmation',
+    sectionSubtitle: 'Begin by describing who is speaking and what they should talk about.',
+    personaLabel: 'Persona *',
+    personaHelper: 'Who is speaking to you in this message.',
+    personaPlaceholder: 'e.g., A gentle grandmother, a wise friend, a caring mentor',
+    nameLabel: 'Optional Name',
+    nameHelper: 'Your preferred name to be addressed in the message.',
+    namePlaceholder: 'Name to use gently in affirmations',
+    instructionsLabel: 'Custom Instructions',
+    instructionsHelper: 'What you want the message to talk about.',
+    instructionsPlaceholder: 'Any specific guidance for the affirmation style...',
+    toneLabel: 'Tone',
+    toneHelper: 'Choose the feeling that best fits the script.',
+    durationLabel: 'Duration (seconds)',
+    durationHelper: 'Decide how long the audio should roughly last.',
+    generateScript: 'Generate Script',
+    scriptLabel: 'Script',
+    scriptHelper: 'You can edit or refine this script before generating the audio.',
+    prepareAudioTitle: 'Prepare your audio',
+    prepareAudioHelper: 'Choose a voice and add optional background music before generating.',
+    voiceLabel: 'Voice selection',
+    backgroundMusicLabel: 'Background music selection',
+    noBackgroundMusic: 'No background music',
+    musicVolumeLabel: 'Background music volume',
+    musicVolumeHelper: 'Scale ranges from 0% to 100%, where 100% plays the track at half its original volume.',
+    generateAudio: 'Generate Audio',
+    loadingText: 'Creating your affirmation...',
+    affirmationHeading: 'Your Affirmation',
+    downloadAudio: 'Download Audio',
+    tones: {
+      cheerful: 'Cheerful',
+      lullaby: 'Lullaby',
+      calm: 'Calm',
+      motivational: 'Motivational',
+    },
+  },
+  zh: {
+    title: '听着，你被爱着',
+    descriptionLine1:
+      '自定义语气、说话的人、措辞和声音，让他们温柔地朗读你专属的肯定语。',
+    descriptionLine2:
+      '每一次聆听，你都会更平静、更被支持，也更能感受到你应得的安慰。',
+    getStarted: '开始体验',
+    sectionTitle: '创建你的专属肯定语',
+    sectionSubtitle: '先描述是谁在对你说话，以及他们应该谈些什么。',
+    personaLabel: '角色 *',
+    personaHelper: '在这条信息中是谁在与你对话。',
+    personaPlaceholder: '例如：温柔的奶奶、睿智的朋友、关怀的导师',
+    nameLabel: '可选名字',
+    nameHelper: '希望在信息中被称呼的名字。',
+    namePlaceholder: '轻柔地使用的名字',
+    instructionsLabel: '自定义提示',
+    instructionsHelper: '你想让这条信息谈论什么。',
+    instructionsPlaceholder: '关于肯定语风格的具体要求...',
+    toneLabel: '语气',
+    toneHelper: '选择最符合脚本的感觉。',
+    durationLabel: '时长（秒）',
+    durationHelper: '决定音频大致播放多长时间。',
+    generateScript: '生成脚本',
+    scriptLabel: '脚本',
+    scriptHelper: '在生成音频前，你可以编辑或微调脚本。',
+    prepareAudioTitle: '准备你的音频',
+    prepareAudioHelper: '在生成前选择一个声音，并可加入背景音乐。',
+    voiceLabel: '声音选择',
+    backgroundMusicLabel: '背景音乐选择',
+    noBackgroundMusic: '无背景音乐',
+    musicVolumeLabel: '背景音乐音量',
+    musicVolumeHelper: '范围为 0% 到 100%，100% 表示以原音量的一半播放。',
+    generateAudio: '生成音频',
+    loadingText: '正在为你创建肯定语...',
+    affirmationHeading: '你的肯定语',
+    downloadAudio: '下载音频',
+    tones: {
+      cheerful: '愉悦',
+      lullaby: '催眠曲',
+      calm: '平静',
+      motivational: '激励',
+    },
+  },
+  ko: {
+    title: '들어봐, 너는 사랑받고 있어',
+    descriptionLine1:
+      '말투, 화자, 단어 선택, 목소리까지 원하는 대로 설정해 부드럽게 읽어주는 맞춤형 확언을 만들 수 있어요.',
+    descriptionLine2:
+      '들을 때마다 조금 더 평온해지고, 지지받는 느낌을 받고, 당신이 마땅히 누려야 할 위로에 가까워질 거예요.',
+    getStarted: '시작하기',
+    sectionTitle: '나만의 확언 만들기',
+    sectionSubtitle: '누가 어떤 내용을 말해줄지 먼저 적어보세요.',
+    personaLabel: '화자 *',
+    personaHelper: '이 메시지에서 당신에게 이야기하는 사람이 누구인가요.',
+    personaPlaceholder: '예: 다정한 할머니, 지혜로운 친구, 배려 깊은 멘토',
+    nameLabel: '선택 이름',
+    nameHelper: '메시지에서 불리고 싶은 이름.',
+    namePlaceholder: '확언에 부드럽게 넣을 이름',
+    instructionsLabel: '맞춤 지시',
+    instructionsHelper: '메시지에 담고 싶은 내용.',
+    instructionsPlaceholder: '확언 스타일에 대한 구체적인 안내...',
+    toneLabel: '톤',
+    toneHelper: '스크립트와 가장 잘 어울리는 느낌을 골라주세요.',
+    durationLabel: '길이(초)',
+    durationHelper: '오디오가 대략 얼마나 길었으면 하는지 정하세요.',
+    generateScript: '스크립트 만들기',
+    scriptLabel: '스크립트',
+    scriptHelper: '오디오를 만들기 전에 스크립트를 수정하거나 다듬을 수 있어요.',
+    prepareAudioTitle: '오디오 준비',
+    prepareAudioHelper: '생성 전에 목소리를 고르고, 배경 음악을 추가할 수 있어요.',
+    voiceLabel: '목소리 선택',
+    backgroundMusicLabel: '배경 음악 선택',
+    noBackgroundMusic: '배경 음악 없음',
+    musicVolumeLabel: '배경 음악 볼륨',
+    musicVolumeHelper: '0%부터 100%까지 조절하며, 100%는 원래 볼륨의 절반으로 재생돼요.',
+    generateAudio: '오디오 만들기',
+    loadingText: '확언을 만드는 중이에요...',
+    affirmationHeading: '나의 확언',
+    downloadAudio: '오디오 다운로드',
+    tones: {
+      cheerful: '명랑한',
+      lullaby: '자장가',
+      calm: '차분한',
+      motivational: '격려',
+    },
+  },
+};
+
 // API and asset base URLs with environment-aware ordering
 const REMOTE_API_BASE = 'https://listen-you-are-loved.onrender.com/api';
 const sameOriginApi = '/api';
@@ -296,6 +428,7 @@ class DeliveryAgent {
 }
 
 function App() {
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [persona, setPersona] = useState('');
   const [name, setName] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -310,6 +443,14 @@ function App() {
   const [error, setError] = useState(null);
   const [musicFiles, setMusicFiles] = useState([]);
   const [started, setStarted] = useState(false);
+  const text = uiText[currentLanguage];
+
+  useEffect(() => {
+    window.currentLanguage = currentLanguage;
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = currentLanguage;
+    }
+  }, [currentLanguage]);
 
   const voices = [
     { value: 'alloy', label: 'Alloy - warm neutral adult' },
@@ -417,6 +558,7 @@ function App() {
           instructions,
           tone,
           durationSeconds: duration,
+          language: currentLanguage,
         }),
       });
 
@@ -510,9 +652,20 @@ function App() {
 
   return (
     <div className="page">
+      <div className="language-switcher">
+        {['en', 'zh', 'ko'].map(code => (
+          <button
+            key={code}
+            className={`lang-btn ${currentLanguage === code ? 'active' : ''}`}
+            onClick={() => setCurrentLanguage(code)}
+          >
+            {code === 'en' ? 'EN' : code === 'zh' ? '中' : '한'}
+          </button>
+        ))}
+      </div>
       <div className="frame landing-frame">
         <div className="decorative-frame">
-          <h1 className="dynapuff-main">Listen, You Are Loved</h1>
+          <h1 className="dynapuff-main">{text.title}</h1>
           <div className="hero-illustration-wrap">
             <img
               src="image/listen-logo.png"
@@ -528,15 +681,13 @@ function App() {
             />
           </div>
           <p className="description lexend-body">
-            Customize their tone, who they speak as, the words they use, and the sound of the voice itself, then let them read
-            your personalized affirmations aloud with gentle care.
+            {text.descriptionLine1}
             <br /><br />
-            With each listen, you will feel a little more centered, a little more supported, and a little more connected to the
-            comfort you deserve.
+            {text.descriptionLine2}
           </p>
           <div className="cta-row">
             <button className="btn-primary lexend-body" onClick={() => setStarted(true)}>
-              Get Started
+              {text.getStarted}
             </button>
           </div>
         </div>
@@ -545,60 +696,60 @@ function App() {
       {started && (
         <div className="frame workspace-frame">
           <div className="section-header">
-            <h2 className="dynapuff-main">Create your personalized affirmation</h2>
-            <p className="lexend-body helper-text">Begin by describing who is speaking and what they should talk about.</p>
+            <h2 className="dynapuff-main">{text.sectionTitle}</h2>
+            <p className="lexend-body helper-text">{text.sectionSubtitle}</p>
           </div>
 
           <div className="form-grid">
             <div className="form-section">
-              <label htmlFor="persona">Persona *</label>
-              <p className="helper-text">Who is speaking to you in this message.</p>
+              <label htmlFor="persona">{text.personaLabel}</label>
+              <p className="helper-text">{text.personaHelper}</p>
               <input
                 type="text"
                 id="persona"
                 value={persona}
                 onChange={(e) => setPersona(e.target.value)}
-                placeholder="e.g., A gentle grandmother, a wise friend, a caring mentor"
+                placeholder={text.personaPlaceholder}
               />
             </div>
 
             <div className="form-section">
-              <label htmlFor="name">Optional Name</label>
-              <p className="helper-text">Your preferred name to be addressed in the message.</p>
+              <label htmlFor="name">{text.nameLabel}</label>
+              <p className="helper-text">{text.nameHelper}</p>
               <input
                 type="text"
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Name to use gently in affirmations"
+                placeholder={text.namePlaceholder}
               />
             </div>
 
             <div className="form-section">
-              <label htmlFor="instructions">Custom Instructions</label>
-              <p className="helper-text">What you want the message to talk about.</p>
+              <label htmlFor="instructions">{text.instructionsLabel}</label>
+              <p className="helper-text">{text.instructionsHelper}</p>
               <textarea
                 id="instructions"
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                placeholder="Any specific guidance for the affirmation style..."
+                placeholder={text.instructionsPlaceholder}
               />
             </div>
 
             <div className="form-section">
-              <label htmlFor="tone">Tone</label>
-              <p className="helper-text">Choose the feeling that best fits the script.</p>
+              <label htmlFor="tone">{text.toneLabel}</label>
+              <p className="helper-text">{text.toneHelper}</p>
               <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)}>
-                <option value="cheerful">Cheerful</option>
-                <option value="lullaby">Lullaby</option>
-                <option value="calm">Calm</option>
-                <option value="motivational">Motivational</option>
+                <option value="cheerful">{text.tones.cheerful}</option>
+                <option value="lullaby">{text.tones.lullaby}</option>
+                <option value="calm">{text.tones.calm}</option>
+                <option value="motivational">{text.tones.motivational}</option>
               </select>
             </div>
 
             <div className="form-section">
-              <label htmlFor="duration">Duration (seconds)</label>
-              <p className="helper-text">Decide how long the audio should roughly last.</p>
+              <label htmlFor="duration">{text.durationLabel}</label>
+              <p className="helper-text">{text.durationHelper}</p>
               <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
                 {Array.from({ length: 11 }, (_, i) => (i + 2) * 10).map(sec => (
                   <option key={sec} value={sec}>{sec}s</option>
@@ -609,34 +760,32 @@ function App() {
 
           <div className="button-group">
             <button className="btn-primary lexend-body" onClick={generateScript} disabled={loading}>
-              Generate Script
+              {text.generateScript}
             </button>
           </div>
 
           {script && (
             <div className="post-script">
               <div className="script-editor">
-                <label htmlFor="script">Script</label>
-                <p className="helper-text">You can edit or refine this script before generating the audio.</p>
+                <label htmlFor="script">{text.scriptLabel}</label>
+                <p className="helper-text">{text.scriptHelper}</p>
                 <textarea
                   id="script"
                   value={script}
                   onChange={(e) => setScript(e.target.value)}
-                  placeholder="Generated script will appear here..."
+                  placeholder={text.scriptHelper}
                 />
               </div>
 
               <div className="audio-setup">
                 <div className="section-header compact">
-                  <h3 className="dynapuff-main">Prepare your audio</h3>
-                  <p className="lexend-body helper-text">
-                    Choose a voice and add optional background music before generating.
-                  </p>
+                  <h3 className="dynapuff-main">{text.prepareAudioTitle}</h3>
+                  <p className="lexend-body helper-text">{text.prepareAudioHelper}</p>
                 </div>
 
                 <div className="form-grid narrow">
                 <div className="form-section">
-                  <label htmlFor="voice">Voice selection</label>
+                  <label htmlFor="voice">{text.voiceLabel}</label>
                   <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
                     {voices.map(v => (
                       <option key={v.value} value={v.value}>{v.label}</option>
@@ -645,13 +794,13 @@ function App() {
                 </div>
 
                 <div className="form-section">
-                  <label htmlFor="backgroundMusic">Background music selection</label>
+                  <label htmlFor="backgroundMusic">{text.backgroundMusicLabel}</label>
                   <select
                     id="backgroundMusic"
                     value={backgroundMusic}
                     onChange={(e) => setBackgroundMusic(e.target.value)}
                   >
-                    <option value="">No background music</option>
+                    <option value="">{text.noBackgroundMusic}</option>
                     {musicFiles.map(file => {
                       const label = musicLabels[file] || file.replace('.mp3', '').replace(/-/g, ' ');
                       return (
@@ -663,8 +812,8 @@ function App() {
 
                 {backgroundMusic && (
                   <div className="form-section">
-                    <label htmlFor="musicVolume">Background music volume</label>
-                    <p className="helper-text">Scale ranges from 0% to 100%, where 100% plays the track at half its original volume.</p>
+                    <label htmlFor="musicVolume">{text.musicVolumeLabel}</label>
+                    <p className="helper-text">{text.musicVolumeHelper}</p>
                     <div className="slider-container">
                       <input
                         type="range"
@@ -683,7 +832,7 @@ function App() {
 
                 <div className="button-group">
                   <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading}>
-                    Generate Audio
+                    {text.generateAudio}
                   </button>
                 </div>
               </div>
@@ -692,7 +841,7 @@ function App() {
 
           {loading && (
             <div className="loading lexend-body">
-              <p>Creating your affirmation...</p>
+              <p>{text.loadingText}</p>
             </div>
           )}
 
@@ -705,11 +854,11 @@ function App() {
           {audioUrl && (
             <div className="audio-section">
               <h2 className="dynapuff-main" style={{ fontSize: '1.5rem', marginBottom: '16px' }}>
-                Your Affirmation
+                {text.affirmationHeading}
               </h2>
               <audio className="audio-player" controls src={audioUrl} />
               <button className="download-btn lexend-body" onClick={downloadAudio}>
-                Download Audio
+                {text.downloadAudio}
               </button>
             </div>
           )}

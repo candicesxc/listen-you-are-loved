@@ -52,6 +52,31 @@
       gap: 24px;
     }
 
+    .language-switcher {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .lang-btn {
+      background: #FBFAF5;
+      border: 1px solid #EFBBCF;
+      color: #3E3A52;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(135deg, #EFBBCF, #C59A8A);
+      color: #fff;
+      border-color: #C59A8A;
+      box-shadow: 0 8px 20px rgba(197, 154, 138, 0.25);
+    }
+
     .frame {
       background: rgba(251, 250, 245, 0.95);
       border-radius: 24px;
