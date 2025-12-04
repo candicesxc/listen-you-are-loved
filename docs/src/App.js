@@ -66,6 +66,14 @@ const uiText = {
       cinematic: 'cinematic',
       lullaby: 'lullaby',
     },
+    errors: {
+      pleaseEnterPersona: 'Please enter a persona',
+      pleaseGenerateScript: 'Please generate a script first',
+      failedToGenerateScript: 'Failed to generate script',
+      failedToGenerateTTS: 'Failed to generate TTS',
+      failedToGenerateAudio: 'Failed to generate audio',
+      backgroundMusicMixFailed: 'Background music could not be mixed. Playing the voice-only version instead.',
+    },
   },
   zh: {
     title: '听着，你被爱着',
@@ -123,6 +131,14 @@ const uiText = {
       cinematic: '电影感',
       lullaby: '摇篮曲',
     },
+    errors: {
+      pleaseEnterPersona: '请输入角色',
+      pleaseGenerateScript: '请先生成脚本',
+      failedToGenerateScript: '生成脚本失败',
+      failedToGenerateTTS: '生成语音失败',
+      failedToGenerateAudio: '生成音频失败',
+      backgroundMusicMixFailed: '无法混合背景音乐。将播放仅语音版本。',
+    },
   },
   ko: {
     title: '들어봐, 너는 사랑받고 있어',
@@ -179,6 +195,14 @@ const uiText = {
       cheerful: '명랑한',
       cinematic: '시네마틱',
       lullaby: '자장가',
+    },
+    errors: {
+      pleaseEnterPersona: '화자를 입력해주세요',
+      pleaseGenerateScript: '먼저 스크립트를 생성해주세요',
+      failedToGenerateScript: '스크립트 생성에 실패했습니다',
+      failedToGenerateTTS: '음성 생성에 실패했습니다',
+      failedToGenerateAudio: '오디오 생성에 실패했습니다',
+      backgroundMusicMixFailed: '배경 음악을 혼합할 수 없습니다. 음성만 재생됩니다.',
     },
   },
 };
@@ -583,7 +607,7 @@ function App() {
 
   const generateScript = async () => {
     if (!persona) {
-      setError('Please enter a persona');
+      setError(text.errors.pleaseEnterPersona);
       return;
     }
 
@@ -609,13 +633,13 @@ function App() {
 
       if (!response.ok) {
         const errorMessage = await handleErrorResponse(response);
-        throw new Error(errorMessage || 'Failed to generate script');
+        throw new Error(errorMessage || text.errors.failedToGenerateScript);
       }
 
       const data = await parseJsonResponse(response);
       setScript(data.script);
     } catch (err) {
-      setError(err.message || 'Failed to generate script');
+      setError(err.message || text.errors.failedToGenerateScript);
     } finally {
       setLoading(false);
     }
@@ -623,7 +647,7 @@ function App() {
 
   const generateAudio = async () => {
     if (!script) {
-      setError('Please generate a script first');
+      setError(text.errors.pleaseGenerateScript);
       return;
     }
 
@@ -651,7 +675,7 @@ function App() {
 
       if (!ttsResponse.ok) {
         const errorMessage = await handleErrorResponse(ttsResponse);
-        throw new Error(errorMessage || 'Failed to generate TTS');
+        throw new Error(errorMessage || text.errors.failedToGenerateTTS);
       }
 
       const ttsData = await parseJsonResponse(ttsResponse);
@@ -666,7 +690,7 @@ function App() {
           finalFormat = 'wav';
         } catch (mixError) {
           console.warn('Falling back to voice-only audio:', mixError);
-          setError('Background music could not be mixed. Playing the voice-only version instead.');
+          setError(text.errors.backgroundMusicMixFailed);
         }
       }
 
@@ -675,7 +699,7 @@ function App() {
       setAudioUrl(url);
       window.currentAudioBlob = audioBlob;
     } catch (err) {
-      setError(err.message || 'Failed to generate audio');
+      setError(err.message || text.errors.failedToGenerateAudio);
     } finally {
       setLoading(false);
     }
@@ -846,7 +870,6 @@ function App() {
                     id="voice" 
                     value={voice} 
                     onChange={(e) => setVoice(e.target.value)}
-                    className={currentLanguage === 'ko' ? 'nanum-pen-script-regular' : ''}
                   >
                     {getVoices(currentLanguage).map(v => (
                       <option key={v.value} value={v.value}>{v.label}</option>
@@ -860,7 +883,6 @@ function App() {
                     id="backgroundMusic"
                     value={backgroundMusic}
                     onChange={(e) => setBackgroundMusic(e.target.value)}
-                    className={currentLanguage === 'ko' ? 'nanum-pen-script-regular' : ''}
                   >
                     <option value="">{text.noBackgroundMusic}</option>
                     {musicFiles.map(file => {
