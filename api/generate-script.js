@@ -47,7 +47,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: personaRaw.trim(),
       styleDescription:
-        "Speak with intimacy, tenderness, warmth, and emotional closeness. Reassure the listener as someone deeply in love with them. Use gentle everyday language.",
+        "Intimate, tender, emotionally close. Everyday language, affectionate and reassuring. You speak like someone deeply in love with the listener.",
       shouldUseRoleName: false
     };
   }
@@ -57,7 +57,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: personaRaw.trim(),
       styleDescription:
-        "Speak casually and honestly, with familiarity. Supportive, playful when appropriate, comforting like someone who truly knows their life.",
+        "Casual, honest, playful when appropriate, but ultimately very comforting. You speak like a close friend they can text at 2am.",
       shouldUseRoleName: false
     };
   }
@@ -65,18 +65,18 @@ function normalizePersona(personaRaw) {
   // Parents
   if (t.includes("mum") || t.includes("mom") || t.includes("mother")) {
     return {
-      roleLabel: "mum",
+      roleLabel: "Mum",
       styleDescription:
-        "Speak in a nurturing, protective, deeply loving tone. Reassure them like a parent who has known them their whole life. Use warm, safe language.",
+        "Nurturing, protective, deeply loving. You speak like a parent who has known them their whole life. Very safe and reassuring.",
       shouldUseRoleName: true
     };
   }
 
   if (t.includes("dad") || t.includes("father")) {
     return {
-      roleLabel: "dad",
+      roleLabel: "Dad",
       styleDescription:
-        "Speak with steady, grounded warmth. Encouraging but calm. Express pride, belief, and dependable support.",
+        "Steady, grounded, encouraging. You speak with warmth and pride, reassuring them they do not need to be perfect to be loved.",
       shouldUseRoleName: true
     };
   }
@@ -84,18 +84,18 @@ function normalizePersona(personaRaw) {
   // Grandparents
   if (t.includes("grandma") || t.includes("grandmother")) {
     return {
-      roleLabel: "grandma",
+      roleLabel: "Grandma",
       styleDescription:
-        "Soft, gentle, wise, unconditional love. Slightly nostalgic tone. Reassurance that Grandma is always happy when they come home.",
+        "Soft, gentle, wise, full of unconditional love. Slightly nostalgic tone. You might mention that Grandma loves them and is happy when they come home.",
       shouldUseRoleName: true
     };
   }
 
   if (t.includes("grandpa") || t.includes("grandfather")) {
     return {
-      roleLabel: "grandpa",
+      roleLabel: "Grandpa",
       styleDescription:
-        "Warm, gentle, steady wisdom. Use simple language, heartfelt reassurance, hints of life experience. Mention Grandpa naturally if appropriate.",
+        "Warm, wise, and steady. Simple language with long-term perspective. You make them feel safe and cherished.",
       shouldUseRoleName: true
     };
   }
@@ -105,7 +105,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: "brother",
       styleDescription:
-        "Speak like a sibling: casual, protective, honest. Can be slightly teasing in a loving way but mainly supportive and proud.",
+        "Casual, protective, honest. Maybe a tiny bit teasing but kind. You speak like someone who grew up with them and always has their back.",
       shouldUseRoleName: false
     };
   }
@@ -114,7 +114,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: "sister",
       styleDescription:
-        "Warm, protective, emotionally intuitive like an older or younger sister. Comforting and affirming.",
+        "Warm, emotionally intuitive, protective. You speak like a sister who understands their feelings and wants to comfort them.",
       shouldUseRoleName: false
     };
   }
@@ -124,7 +124,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: personaRaw.trim(),
       styleDescription:
-        "Speak with naive innocence, sweetness, simplicity, and love. Tone should feel young, gentle, and full of pure affection.",
+        "Innocent, simple, pure affection. You speak like a child who loves this person very much, using simple words and feelings.",
       shouldUseRoleName: true
     };
   }
@@ -134,7 +134,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: "mentor",
       styleDescription:
-        "Confident, uplifting, insightful. Use calm, structured reassurance. Affirm their growth, potential, and resilience.",
+        "Calm, structured, encouraging. You speak with clarity and belief in their potential, like someone who has watched their growth.",
       shouldUseRoleName: true
     };
   }
@@ -144,16 +144,16 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: personaRaw.trim(),
       styleDescription:
-        "Professional but warm. Encouraging and appreciative. Avoid overly intimate tone. Focus on capability, effort, and trust.",
+        "Professional but warm. You focus on their competence, effort, and growth, reassuring them that they are valued and trusted.",
       shouldUseRoleName: false
     };
   }
 
-  if (t.includes("coworker") || t.includes("colleague") || t.includes("teammate")) {
+  if (t.includes("coworker") || t.includes("co-worker") || t.includes("colleague") || t.includes("teammate")) {
     return {
       roleLabel: personaRaw.trim(),
       styleDescription:
-        "Speak like a friendly peer. Supportive, understanding of work stress, grounded and relatable.",
+        "Friendly peer tone. You recognize work stress and reassure them as someone on the same team or at the same level.",
       shouldUseRoleName: false
     };
   }
@@ -163,7 +163,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: "classmate",
       styleDescription:
-        "Casual, relatable, supportive. Speak like someone in the same environment dealing with the same pressures.",
+        "Casual, same-stage-in-life vibe. You understand school pressure and social dynamics and speak as someone going through similar things.",
       shouldUseRoleName: false
     };
   }
@@ -173,7 +173,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: "God",
       styleDescription:
-        "Speak with serene authority, unconditional love, and calm reassurance. Tone should be peaceful and divine, without preaching or fear.",
+        "Serene, calm, unconditional love. You speak with a sense of presence and reassurance, without fear or harshness.",
       shouldUseRoleName: true
     };
   }
@@ -182,7 +182,7 @@ function normalizePersona(personaRaw) {
     return {
       roleLabel: "your guardian angel",
       styleDescription:
-        "Soft, ethereal, protective voice. Reassuring, peaceful, and full of light. Speak like a spiritual presence offering comfort.",
+        "Soft, protective, light-filled voice. You speak like a spiritual presence gently watching over them.",
       shouldUseRoleName: true
     };
   }
@@ -190,18 +190,18 @@ function normalizePersona(personaRaw) {
   // Pets
   if (t.includes("dog")) {
     return {
-      roleLabel: "their dog",
+      roleLabel: "your dog",
       styleDescription:
-        "Innocent, loyal, loving, excited. Speak in simple, pure emotional language. Express unconditional love.",
+        "Simple, enthusiastic, pure love. You speak with excited affection, focusing on how happy you are just to be with them.",
       shouldUseRoleName: true
     };
   }
 
   if (t.includes("cat")) {
     return {
-      roleLabel: "their cat",
+      roleLabel: "your cat",
       styleDescription:
-        "Warm but slightly reserved, affectionate in a subtle way. Gentle humor is acceptable.",
+        "Warm but slightly reserved affection, with gentle humor. You show love in a quieter, softer way.",
       shouldUseRoleName: true
     };
   }
@@ -210,8 +210,87 @@ function normalizePersona(personaRaw) {
   return {
     roleLabel: personaRaw.trim(),
     styleDescription:
-      "Speak fully in this role. Use tone, vocabulary, and emotional style that match this persona. The script must feel distinctly spoken by this person, not generic.",
+      "Speak fully in this role. Use tone, vocabulary, and emotional style that clearly match this persona. It must not sound like a generic voice.",
     shouldUseRoleName: false
+  };
+}
+
+function normalizeTone(toneRaw) {
+  if (!toneRaw) {
+    return {
+      toneLabel: "neutral warm",
+      textStyleDescription:
+        "Soft, warm, steady tone. Balanced, not too fast or slow.",
+      ttsSettings: {
+        speakingRate: 1.0,
+        pitch: 0
+      }
+    };
+  }
+
+  const t = toneRaw.toLowerCase().trim();
+
+  // Motivational
+  if (t.includes("motivational")) {
+    return {
+      toneLabel: "motivational",
+      textStyleDescription:
+        "Energetic, uplifting, forward-looking. Short, strong sentences. Clear calls to action like 'you can do this', 'keep going'.",
+      ttsSettings: {
+        speakingRate: 1.1,  // slightly faster
+        pitch: 2            // a bit brighter
+      }
+    };
+  }
+
+  // Calm
+  if (t.includes("calm")) {
+    return {
+      toneLabel: "calm",
+      textStyleDescription:
+        "Slow, grounding, soothing. Longer breaths between ideas, gentle reassurance, lots of safety and validation.",
+      ttsSettings: {
+        speakingRate: 0.9,  // a bit slower
+        pitch: -1           // slightly lower, more grounded
+      }
+    };
+  }
+
+  // Lullaby
+  if (t.includes("lullaby")) {
+    return {
+      toneLabel: "lullaby",
+      textStyleDescription:
+        "Very soft, sleepy, repetitive and gently rhythmic. Sentences should be slower and more flowing. Lots of imagery of rest, warmth, and being held.",
+      ttsSettings: {
+        speakingRate: 0.8,  // clearly slower
+        pitch: -2           // softer, lower feel
+      }
+    };
+  }
+
+  // Cheerful
+  if (t.includes("cheerful")) {
+    return {
+      toneLabel: "cheerful",
+      textStyleDescription:
+        "Bright, light, positive. Slightly playful, optimistic, with more smiles in the wording. Still gentle, not manic.",
+      ttsSettings: {
+        speakingRate: 1.15, // a bit faster and lively
+        pitch: 3            // brighter, higher
+      }
+    };
+  }
+
+  // Default fallback
+  return {
+    toneLabel: toneRaw.trim(),
+    textStyleDescription:
+      "Soft, warm, steady tone. Balanced speed and energy.",
+    ttsSettings: {
+      speakingRate: 1.0,
+      pitch: 0
+    }
   };
 }
 
@@ -233,6 +312,9 @@ module.exports = async (req, res) => {
 
     // Normalize persona to get role-specific guidance (handles empty/whitespace gracefully)
     const personaInfo = normalizePersona(persona || '');
+    
+    // Normalize tone to get text style and TTS settings
+    const toneInfo = normalizeTone(tone || '');
 
     const rateMultiplier = toneWordRateMultipliers[tone] || 1;
     // Calculate target words accounting for slower reading (1.6 wps) and buffer for accuracy
@@ -258,33 +340,42 @@ module.exports = async (req, res) => {
 
     const systemPrompt = `You are generating a short, emotionally supportive audio script.
 
-SPEAKER IDENTITY:
+SPEAKER IDENTITY (RELATIONSHIP):
 ${personaInfo.roleLabel}
 
-SPEAKER VOICE & STYLE:
+HOW THE SPEAKER SOUNDS AS THIS PERSON:
 ${personaInfo.styleDescription}
+
+EMOTIONAL TONE:
+${toneInfo.toneLabel} — ${toneInfo.textStyleDescription}
 
 WHO THEY ARE SPEAKING TO:
 The listener is someone they care about deeply and who needs emotional comfort right now.
 
+USER CONTEXT (if provided by the app):
+${instructions || 'None'}
+
+LANGUAGE:
+${language}
+
 INSTRUCTIONS:
-- Write the script as if it is spoken directly by the person described in SPEAKER IDENTITY.
+- Write the script as if it is spoken directly BY the person described in SPEAKER IDENTITY to the listener.
 - Use first person "I" for the speaker and "you" for the listener.
-- The tone, vocabulary, and emotional rhythm MUST be clearly different depending on the persona.
-  • A boyfriend should sound intimate and youthful.  
-  • A grandma should sound gentle, wise, slow, and comforting.  
-  • A mentor should sound calm, structured, and encouraging.  
-  • God should sound serene and unconditional.  
-  • A child should sound sweet, simple, innocent.  
-  • A classmate should sound casual and relatable.  
-  • A parent should sound protective and unconditional.  
-  • A pet dog should sound excited, pure, and loving.  
-  • A coworker should sound warm but professional.  
-  These voices MUST NOT sound similar to each other.
-- Avoid generic, universal language. The message must feel specific to this relationship.
+- Combine RELATIONSHIP and TONE:
+  • For example, a "Grandma" speaking in a "lullaby" tone should feel extremely soft, slow, and sleepy-comforting.  
+  • A "boyfriend" in a "cheerful" tone should feel bright, playful, and affectionate.  
+  • A "mentor" in a "motivational" tone should feel structured, confident, and forward-looking.  
+  • A "mum" in a "calm" tone should feel grounding, protective, and steady.
+- Make PERSONA voices clearly distinct from each other (boyfriend vs grandma vs mentor vs god vs classmate, etc.).
+- Make TONE styles clearly distinct:
+  • Motivational: more dynamic, forward momentum, "you can do this", strong positive push.  
+  • Calm: grounded, slower, gentle reassurance, safety.  
+  • Lullaby: slow, sleepy, repetitive, very soft.  
+  • Cheerful: light, bright, upbeat, optimistic.
+- Avoid generic, one-size-fits-all language. The message must feel specific to THIS relationship AND THIS tone.
 ${roleNameInstruction}
-- Keep tone warm, validating, and emotionally safe.
-- Follow tone rules and end with the required tone-specific closing.
+- Keep the tone emotionally safe, validating, and non-judgmental.
+- Keep the length within the same range currently used by the app.
 - Use warm, simple, supportive language.
 - No negativity, contrast words, metaphors, or trauma.
 - Write one continuous flowing paragraph.
@@ -299,8 +390,9 @@ SPEAKER IDENTITY: ${personaInfo.roleLabel}
 SPEAKER STYLE: ${personaInfo.styleDescription}
 ${personaInfo.shouldUseRoleName ? 'Include the role name naturally in the script at least once.' : ''}
 
+EMOTIONAL TONE: ${toneInfo.toneLabel} — ${toneInfo.textStyleDescription}
+
 Context from user: ${instructions || 'None'}
-Tone: ${tone}
 Duration: ${durationSeconds} seconds
 Target word count: ${targetWords}
 Optional name: ${name || 'None'}
@@ -322,7 +414,15 @@ One paragraph. No bullets or breaks.`;
 
     const script = completion.choices[0].message.content.trim();
 
-    res.json({ script, targetWords, actualWords: script.split(/\s+/).length });
+    res.json({ 
+      script, 
+      targetWords, 
+      actualWords: script.split(/\s+/).length,
+      toneInfo: {
+        toneLabel: toneInfo.toneLabel,
+        ttsSettings: toneInfo.ttsSettings
+      }
+    });
   } catch (error) {
     console.error('Error generating script:', error);
     res.status(500).json({ error: 'Failed to generate script', details: error.message });
