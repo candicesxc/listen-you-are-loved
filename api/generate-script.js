@@ -19,7 +19,7 @@ function getOpenAIClient() {
 // Base reading rate (adjusted for 20% slower reading)
 const wordsPerSecond = 1.6;
 // Additional multiplier to ensure scripts are long enough to match duration
-const lengthBufferMultiplier = 1.2;
+const lengthBufferMultiplier = 1.56;
 const toneWordRateMultipliers = {
   lullaby: 0.7,
 };
@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
 
 Rules:
 - Begin most lines with "You".
-- If a name is provided, include it gently and sparingly.
+- If a name is provided, use it as a nickname naturally.
 - Match the emotional style of the chosen persona.
 - Follow tone rules and end with the required tone-specific closing.
 - Use warm, simple, supportive language.
@@ -88,7 +88,7 @@ Target word count: ${targetWords}
 Optional name: ${name || 'None'}
 
 Begin most lines with "You".
-Use the name only where it feels gentle and meaningful.
+Use the name as a nickname naturally where appropriate.
 ${toneEndingLanguageHint}
 ${toneEndingRule}
 
