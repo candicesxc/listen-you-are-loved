@@ -52,6 +52,20 @@ const uiText = {
       calm: 'Calm',
       motivational: 'Motivational',
     },
+    voices: {
+      alloy: 'Alloy - warm neutral adult',
+      echo: 'Echo - calm adult male',
+      fable: 'Fable - gentle young female',
+      onyx: 'Onyx - deep adult male',
+      nova: 'Nova - bright young female',
+      shimmer: 'Shimmer - airy teen female',
+    },
+    musicLabels: {
+      ambient: 'ambient',
+      cheerful: 'cheerful',
+      cinematic: 'cinematic',
+      lullaby: 'lullaby',
+    },
   },
   zh: {
     title: '听着，你被爱着',
@@ -95,6 +109,20 @@ const uiText = {
       calm: '平静',
       motivational: '激励',
     },
+    voices: {
+      alloy: 'Alloy - 温暖中性成人',
+      echo: 'Echo - 平静成年男性',
+      fable: 'Fable - 温柔年轻女性',
+      onyx: 'Onyx - 深沉成年男性',
+      nova: 'Nova - 明亮年轻女性',
+      shimmer: 'Shimmer - 轻盈青少年女性',
+    },
+    musicLabels: {
+      ambient: '氛围',
+      cheerful: '欢快',
+      cinematic: '电影感',
+      lullaby: '摇篮曲',
+    },
   },
   ko: {
     title: '들어봐, 너는 사랑받고 있어',
@@ -137,6 +165,20 @@ const uiText = {
       lullaby: '자장가',
       calm: '차분한',
       motivational: '격려',
+    },
+    voices: {
+      alloy: 'Alloy - 따뜻한 중성 성인',
+      echo: 'Echo - 차분한 성인 남성',
+      fable: 'Fable - 부드러운 젊은 여성',
+      onyx: 'Onyx - 깊은 성인 남성',
+      nova: 'Nova - 밝은 젊은 여성',
+      shimmer: 'Shimmer - 가벼운 청소년 여성',
+    },
+    musicLabels: {
+      ambient: '앰비언트',
+      cheerful: '명랑한',
+      cinematic: '시네마틱',
+      lullaby: '자장가',
     },
   },
 };
@@ -449,20 +491,26 @@ function App() {
     }
   }, [currentLanguage]);
 
-  const voices = [
-    { value: 'alloy', label: 'Alloy - warm neutral adult' },
-    { value: 'echo', label: 'Echo - calm adult male' },
-    { value: 'fable', label: 'Fable - gentle young female' },
-    { value: 'onyx', label: 'Onyx - deep adult male' },
-    { value: 'nova', label: 'Nova - bright young female' },
-    { value: 'shimmer', label: 'Shimmer - airy teen female' },
-  ];
+  const getVoices = (lang) => {
+    const voiceKeys = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+    return voiceKeys.map(key => ({
+      value: key,
+      label: uiText[lang]?.voices?.[key] || uiText.en.voices[key],
+    }));
+  };
 
-  const musicLabels = {
-    'ambient-background-2-421085.mp3': 'ambient',
-    'cheerful-joyful-playful-music-380550.mp3': 'cheerful',
-    'cinematic-ambient-348342.mp3': 'cinematic',
-    'lullaby-acoustic-guitar-438657.mp3': 'lullaby',
+  const getMusicLabel = (filename, lang) => {
+    const musicLabels = {
+      'ambient-background-2-421085.mp3': 'ambient',
+      'cheerful-joyful-playful-music-380550.mp3': 'cheerful',
+      'cinematic-ambient-348342.mp3': 'cinematic',
+      'lullaby-acoustic-guitar-438657.mp3': 'lullaby',
+    };
+    const key = musicLabels[filename];
+    if (!key) {
+      return filename.replace('.mp3', '').replace(/-/g, ' ');
+    }
+    return uiText[lang]?.musicLabels?.[key] || uiText.en.musicLabels[key];
   };
 
   // Helper function to safely parse JSON responses
@@ -794,8 +842,13 @@ function App() {
                 <div className="form-grid narrow">
                 <div className="form-section">
                   <label htmlFor="voice">{text.voiceLabel}</label>
-                  <select id="voice" value={voice} onChange={(e) => setVoice(e.target.value)}>
-                    {voices.map(v => (
+                  <select 
+                    id="voice" 
+                    value={voice} 
+                    onChange={(e) => setVoice(e.target.value)}
+                    className={currentLanguage === 'ko' ? 'nanum-pen-script-regular' : ''}
+                  >
+                    {getVoices(currentLanguage).map(v => (
                       <option key={v.value} value={v.value}>{v.label}</option>
                     ))}
                   </select>
@@ -807,10 +860,11 @@ function App() {
                     id="backgroundMusic"
                     value={backgroundMusic}
                     onChange={(e) => setBackgroundMusic(e.target.value)}
+                    className={currentLanguage === 'ko' ? 'nanum-pen-script-regular' : ''}
                   >
                     <option value="">{text.noBackgroundMusic}</option>
                     {musicFiles.map(file => {
-                      const label = musicLabels[file] || file.replace('.mp3', '').replace(/-/g, ' ');
+                      const label = getMusicLabel(file, currentLanguage);
                       return (
                         <option key={file} value={file}>{label}</option>
                       );
