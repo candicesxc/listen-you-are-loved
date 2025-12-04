@@ -16,7 +16,10 @@ function getOpenAIClient() {
   return openai;
 }
 
-const wordsPerSecond = 2;
+// Base reading rate (adjusted for 20% slower reading)
+const wordsPerSecond = 1.6;
+// Additional multiplier to ensure scripts are long enough to match duration
+const lengthBufferMultiplier = 1.2;
 const toneWordRateMultipliers = {
   lullaby: 0.7,
 };
@@ -45,7 +48,8 @@ module.exports = async (req, res) => {
     }
 
     const rateMultiplier = toneWordRateMultipliers[tone] || 1;
-    const targetWords = Math.round(durationSeconds * wordsPerSecond * rateMultiplier);
+    // Calculate target words accounting for slower reading (1.6 wps) and buffer for accuracy
+    const targetWords = Math.round(durationSeconds * wordsPerSecond * lengthBufferMultiplier * rateMultiplier);
     const toneEndingRule = toneEndingRules[tone] || 'ends with gentle reassurance';
     const languageInstruction =
       language === 'zh'
