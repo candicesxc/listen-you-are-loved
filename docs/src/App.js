@@ -685,7 +685,16 @@ function App() {
             {text.descriptionLine2}
           </p>
           <div className="cta-row">
-            <button className="btn-primary lexend-body" onClick={() => setStarted(true)}>
+            <button className="btn-primary lexend-body" onClick={() => {
+              setStarted(true);
+              // Scroll to the affirmation section after state update
+              setTimeout(() => {
+                const section = document.getElementById('affirmation-section');
+                if (section) {
+                  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }, 100);
+            }}>
               {text.getStarted}
             </button>
           </div>
@@ -694,7 +703,7 @@ function App() {
 
       {started && (
         <div className="frame workspace-frame">
-          <div className="section-header">
+          <div className="section-header" id="affirmation-section">
             <h2 className="dynapuff-main">{text.sectionTitle}</h2>
             <p className="lexend-body helper-text">{text.sectionSubtitle}</p>
           </div>
