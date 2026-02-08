@@ -54,11 +54,18 @@ const uiText = {
     },
     voices: {
       alloy: 'Alloy - warm neutral adult',
+      ash: 'Ash - clear and precise',
+      ballad: 'Ballad - smooth and melodic',
+      coral: 'Coral - warm and friendly',
       echo: 'Echo - calm adult male',
       fable: 'Fable - gentle young female',
       onyx: 'Onyx - deep adult male',
       nova: 'Nova - bright young female',
+      sage: 'Sage - calm and thoughtful',
       shimmer: 'Shimmer - airy teen female',
+      verse: 'Verse - versatile and expressive',
+      marin: 'Marin - fresh and bright',
+      cedar: 'Cedar - warm and grounded',
     },
     musicLabels: {
       ambient: 'ambient',
@@ -119,11 +126,18 @@ const uiText = {
     },
     voices: {
       alloy: 'Alloy - 温暖中性成人',
+      ash: 'Ash - 清晰精准',
+      ballad: 'Ballad - 流畅优美',
+      coral: 'Coral - 温暖友好',
       echo: 'Echo - 平静成年男性',
       fable: 'Fable - 温柔年轻女性',
       onyx: 'Onyx - 深沉成年男性',
       nova: 'Nova - 明亮年轻女性',
+      sage: 'Sage - 沉稳深思',
       shimmer: 'Shimmer - 轻盈青少年女性',
+      verse: 'Verse - 多变富有表现力',
+      marin: 'Marin - 清新明亮',
+      cedar: 'Cedar - 温暖沉稳',
     },
     musicLabels: {
       ambient: '氛围',
@@ -184,11 +198,18 @@ const uiText = {
     },
     voices: {
       alloy: 'Alloy - 따뜻하고 중립적인 성인',
+      ash: 'Ash - 명확하고 정밀한',
+      ballad: 'Ballad - 부드럽고 선율적인',
+      coral: 'Coral - 따뜻하고 친근한',
       echo: 'Echo - 차분한 성인 남성',
       fable: 'Fable - 부드러운 젊은 여성',
       onyx: 'Onyx - 깊은 성인 남성',
       nova: 'Nova - 밝은 젊은 여성',
+      sage: 'Sage - 차분하고 사려 깊은',
       shimmer: 'Shimmer - 가벼운 십대 여성',
+      verse: 'Verse - 다재다능하고 표현력 있는',
+      marin: 'Marin - 상쾌하고 밝은',
+      cedar: 'Cedar - 따뜻하고 안정적인',
     },
     musicLabels: {
       ambient: '앰비언트',
@@ -516,7 +537,7 @@ function App() {
   }, [currentLanguage]);
 
   const getVoices = (lang) => {
-    const voiceKeys = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+    const voiceKeys = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer', 'verse', 'marin', 'cedar'];
     return voiceKeys.map(key => ({
       value: key,
       label: uiText[lang]?.voices?.[key] || uiText.en.voices[key],
