@@ -46,6 +46,11 @@ const uiText = {
     loadingText: 'Creating your affirmation...',
     affirmationHeading: 'Your Affirmation',
     downloadAudio: 'Download Audio',
+    aiMatchGenerate: 'AI Match & Generate',
+    replayLastAffirmation: 'Replay Last Affirmation',
+    savedAffirmations: 'Saved Affirmations',
+    noSavedAffirmations: 'No saved affirmations yet.',
+    closeGallery: 'Close',
     tones: {
       cheerful: 'Cheerful',
       lullaby: 'Lullaby',
@@ -80,6 +85,7 @@ const uiText = {
       failedToGenerateTTS: 'Failed to generate TTS',
       failedToGenerateAudio: 'Failed to generate audio',
       backgroundMusicMixFailed: 'Background music could not be mixed. Playing the voice-only version instead.',
+      failedToAiMatch: 'Could not match audio settings. Please try again or choose manually.',
     },
   },
   zh: {
@@ -118,6 +124,11 @@ const uiText = {
     loadingText: '正在为你创建爱的箴言...',
     affirmationHeading: '你的爱的箴言',
     downloadAudio: '下载音频',
+    aiMatchGenerate: 'AI 匹配并生成',
+    replayLastAffirmation: '重播上次的箴言',
+    savedAffirmations: '已保存的箴言',
+    noSavedAffirmations: '还没有保存的箴言。',
+    closeGallery: '关闭',
     tones: {
       cheerful: '愉悦',
       lullaby: '催眠曲',
@@ -152,6 +163,7 @@ const uiText = {
       failedToGenerateTTS: '生成语音失败',
       failedToGenerateAudio: '生成音频失败',
       backgroundMusicMixFailed: '无法混合背景音乐。将播放仅语音版本。',
+      failedToAiMatch: '无法匹配音频设置。请重试或手动选择。',
     },
   },
   ko: {
@@ -190,6 +202,11 @@ const uiText = {
     loadingText: '확언을 만드는 중이에요...',
     affirmationHeading: '나의 확언',
     downloadAudio: '오디오 다운로드',
+    aiMatchGenerate: 'AI 매칭 & 생성',
+    replayLastAffirmation: '마지막 확언 다시 듣기',
+    savedAffirmations: '저장된 확언',
+    noSavedAffirmations: '저장된 확언이 아직 없습니다.',
+    closeGallery: '닫기',
     tones: {
       cheerful: '유쾌한',
       lullaby: '자장가',
@@ -224,6 +241,7 @@ const uiText = {
       failedToGenerateTTS: '음성 생성에 실패했습니다',
       failedToGenerateAudio: '오디오 생성에 실패했습니다',
       backgroundMusicMixFailed: '배경 음악을 혼합할 수 없습니다. 음성만 재생됩니다.',
+      failedToAiMatch: 'AI 매칭에 실패했습니다. 다시 시도하거나 직접 선택해주세요.',
     },
   },
 };
@@ -278,19 +296,19 @@ class ProofAgent {
     if (!script || script.trim().length === 0) {
       return { valid: false, error: 'Script is empty' };
     }
-    
+
     const toneEndings = {
       lullaby: /good night|sleep well|rest well/i,
       cheerful: /good day|have a great|wonderful day/i,
       calm: /peace|calm|gentle|reassur/i,
       motivational: /you can|you will|you've got|believe/i,
     };
-    
+
     const endingCheck = toneEndings[tone];
     if (endingCheck && !endingCheck.test(script)) {
       return { valid: true, warning: 'Tone ending may not match requirements' };
     }
-    
+
     return { valid: true };
   }
 }
@@ -486,7 +504,7 @@ class DeliveryAgent {
     const byteCharacters = atob(base64);
     const chunkSize = 8192;
     const byteArrays = [];
-    
+
     for (let i = 0; i < byteCharacters.length; i += chunkSize) {
       const chunk = byteCharacters.slice(i, i + chunkSize);
       const byteNumbers = new Array(chunk.length);
@@ -495,7 +513,7 @@ class DeliveryAgent {
       }
       byteArrays.push(new Uint8Array(byteNumbers));
     }
-    
+
     return new Blob(byteArrays, { type: mimeType });
   }
 
@@ -510,6 +528,66 @@ class DeliveryAgent {
     URL.revokeObjectURL(url);
   }
 }
+
+// IndexedDB storage for saved affirmations
+const AffirmationStore = {
+  DB_NAME: 'listen-you-are-loved',
+  STORE_NAME: 'affirmations',
+  MAX_ITEMS: 10,
+
+  open() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.DB_NAME, 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+          db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  async save(entry) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE_NAME, 'readwrite');
+      tx.objectStore(this.STORE_NAME).put(entry);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  },
+
+  async getAll() {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE_NAME, 'readonly');
+      const request = tx.objectStore(this.STORE_NAME).getAll();
+      request.onsuccess = () => {
+        db.close();
+        const items = request.result.sort((a, b) => b.createdAt - a.createdAt);
+        resolve(items);
+      };
+      request.onerror = () => { db.close(); reject(request.error); };
+    });
+  },
+
+  async prune() {
+    const items = await this.getAll();
+    if (items.length > this.MAX_ITEMS) {
+      const toDelete = items.slice(this.MAX_ITEMS);
+      const db = await this.open();
+      const tx = db.transaction(this.STORE_NAME, 'readwrite');
+      const store = tx.objectStore(this.STORE_NAME);
+      toDelete.forEach(item => store.delete(item.id));
+      return new Promise((resolve) => {
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); resolve(); };
+      });
+    }
+  },
+};
 
 function App() {
   const [currentLanguage, setCurrentLanguage] = useState('en');
@@ -527,6 +605,9 @@ function App() {
   const [error, setError] = useState(null);
   const [musicFiles, setMusicFiles] = useState([]);
   const [started, setStarted] = useState(false);
+  const [savedAffirmations, setSavedAffirmations] = useState([]);
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryUrls, setGalleryUrls] = useState({});
   const text = uiText[currentLanguage];
 
   useEffect(() => {
@@ -573,7 +654,7 @@ function App() {
     // Clone the response so we can read it without consuming the body
     const clonedResponse = response.clone();
     const contentType = response.headers.get('content-type') || '';
-    
+
     if (contentType.includes('application/json')) {
       try {
         const errorData = await response.json();
@@ -588,7 +669,7 @@ function App() {
         }
       }
     }
-    
+
     // If not JSON, read as text
     try {
       const errorText = await response.text();
@@ -626,6 +707,59 @@ function App() {
       });
   }, []);
 
+  // Load saved affirmations count on mount
+  useEffect(() => {
+    AffirmationStore.getAll()
+      .then(items => setSavedAffirmations(items))
+      .catch(() => {});
+  }, []);
+
+  const saveAffirmationToGallery = async (audioBlob, metadata) => {
+    try {
+      const entry = {
+        id: Date.now().toString(),
+        createdAt: Date.now(),
+        persona,
+        tone,
+        customInstructions: instructions,
+        voice: metadata.voice,
+        music: metadata.music,
+        musicVolume: metadata.musicVolume,
+        oneLineSummary: metadata.oneLineSummary,
+        audioBlob,
+      };
+      await AffirmationStore.save(entry);
+      await AffirmationStore.prune();
+      const items = await AffirmationStore.getAll();
+      setSavedAffirmations(items);
+    } catch (err) {
+      console.warn('Failed to save affirmation:', err);
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      const items = await AffirmationStore.getAll();
+      setSavedAffirmations(items);
+      const urls = {};
+      items.forEach(item => {
+        if (item.audioBlob) {
+          urls[item.id] = URL.createObjectURL(item.audioBlob);
+        }
+      });
+      setGalleryUrls(urls);
+      setShowGallery(true);
+    } catch (err) {
+      console.warn('Failed to open gallery:', err);
+    }
+  };
+
+  const closeGallery = () => {
+    Object.values(galleryUrls).forEach(url => URL.revokeObjectURL(url));
+    setGalleryUrls({});
+    setShowGallery(false);
+  };
+
   const generateScript = async () => {
     if (!persona) {
       setError(text.errors.pleaseEnterPersona);
@@ -635,7 +769,7 @@ function App() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Call backend script generation API
       const response = await fetchWithFallback('/generate-script', {
         method: 'POST',
@@ -666,11 +800,17 @@ function App() {
     }
   };
 
-  const generateAudio = async () => {
+  const generateAudio = async (overrideConfig) => {
     if (!script) {
       setError(text.errors.pleaseGenerateScript);
       return;
     }
+
+    // Determine effective settings: use override if provided, else use dropdown state
+    const effectiveVoice = overrideConfig?.voice || voice;
+    const effectiveMusic = overrideConfig?.backgroundMusic ?? backgroundMusic;
+    const effectiveVolume = overrideConfig?.musicVolume ?? musicVolume;
+    const summary = overrideConfig?.oneLineSummary || '';
 
     try {
       setLoading(true);
@@ -690,7 +830,7 @@ function App() {
         },
         body: JSON.stringify({
           script: script,
-          voice: voice,
+          voice: effectiveVoice,
         }),
       });
 
@@ -702,12 +842,12 @@ function App() {
       const ttsData = await parseJsonResponse(ttsResponse);
       let finalAudioBase64 = ttsData.audio;
       let finalFormat = ttsData.format || 'mp3';
-      
+
       // If background music is selected, mix it client-side
-      if (backgroundMusic) {
+      if (effectiveMusic) {
         try {
           const musicAgent = new MusicAgent();
-          finalAudioBase64 = await musicAgent.mix(finalAudioBase64, backgroundMusic, musicVolume);
+          finalAudioBase64 = await musicAgent.mix(finalAudioBase64, effectiveMusic, effectiveVolume);
           finalFormat = 'wav';
         } catch (mixError) {
           console.warn('Falling back to voice-only audio:', mixError);
@@ -719,9 +859,56 @@ function App() {
       const { audioUrl: url, audioBlob } = deliveryAgent.deliver(finalAudioBase64, finalFormat);
       setAudioUrl(url);
       window.currentAudioBlob = audioBlob;
+
+      // Save to gallery
+      await saveAffirmationToGallery(audioBlob, {
+        voice: effectiveVoice,
+        music: effectiveMusic,
+        musicVolume: Math.round(effectiveVolume * 100),
+        oneLineSummary: summary || script.substring(0, 80),
+      });
     } catch (err) {
       setError(err.message || text.errors.failedToGenerateAudio);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const aiMatchAndGenerate = async () => {
+    if (!script) {
+      setError(text.errors.pleaseGenerateScript);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetchWithFallback('/ai-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona, tone, instructions }),
+      });
+
+      if (!response.ok) {
+        const errorMessage = await handleErrorResponse(response);
+        throw new Error(errorMessage || text.errors.failedToAiMatch);
+      }
+
+      const matchData = await parseJsonResponse(response);
+      const vol = Number(matchData.musicVolume);
+      const safeVolume = (Number.isFinite(vol) && vol >= 0 && vol <= 100) ? vol / 100 : 0.15;
+
+      // Generate audio with AI-chosen settings without changing dropdown state
+      setLoading(false);
+      await generateAudio({
+        voice: matchData.voice,
+        backgroundMusic: matchData.musicFile,
+        musicVolume: safeVolume,
+        oneLineSummary: matchData.oneLineSummary || '',
+      });
+    } catch (err) {
+      setError(err.message || text.errors.failedToAiMatch);
       setLoading(false);
     }
   };
@@ -790,6 +977,11 @@ function App() {
             }}>
               {text.getStarted}
             </button>
+            {savedAffirmations.length > 0 && (
+              <button className="btn-secondary lexend-body" onClick={openGallery}>
+                {text.replayLastAffirmation}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -887,9 +1079,9 @@ function App() {
                 <div className="form-grid narrow">
                 <div className="form-section">
                   <label htmlFor="voice">{text.voiceLabel}</label>
-                  <select 
-                    id="voice" 
-                    value={voice} 
+                  <select
+                    id="voice"
+                    value={voice}
                     onChange={(e) => setVoice(e.target.value)}
                   >
                     {getVoices(currentLanguage).map(v => (
@@ -938,8 +1130,11 @@ function App() {
                 </div>
 
                 <div className="button-group">
-                  <button className="btn-primary lexend-body" onClick={generateAudio} disabled={loading}>
+                  <button className="btn-primary lexend-body" onClick={() => generateAudio()} disabled={loading}>
                     {text.generateAudio}
+                  </button>
+                  <button className="btn-secondary lexend-body" onClick={aiMatchAndGenerate} disabled={loading}>
+                    {text.aiMatchGenerate}
                   </button>
                 </div>
               </div>
@@ -969,6 +1164,33 @@ function App() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {showGallery && (
+        <div className="gallery-overlay" onClick={closeGallery}>
+          <div className="gallery-modal" onClick={e => e.stopPropagation()}>
+            <div className="gallery-header">
+              <h2 className="dynapuff-main">{text.savedAffirmations}</h2>
+              <button className="btn-secondary lexend-body" onClick={closeGallery}>
+                {text.closeGallery}
+              </button>
+            </div>
+            <div className="gallery-list">
+              {savedAffirmations.length === 0 ? (
+                <p className="lexend-body helper-text">{text.noSavedAffirmations}</p>
+              ) : (
+                savedAffirmations.map(item => (
+                  <div key={item.id} className="gallery-item">
+                    <p className="gallery-summary lexend-body">{item.oneLineSummary}</p>
+                    {galleryUrls[item.id] && (
+                      <audio className="audio-player" controls src={galleryUrls[item.id]} />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
