@@ -127,7 +127,7 @@ module.exports = async (req, res) => {
     // Note: OpenAI TTS doesn't support pitch directly, but speed affects perceived pitch
     // Faster speeds tend to sound brighter, slower speeds sound deeper
     const ttsParams = {
-      model: 'tts-1',
+      model: 'gpt-4o-mini-tts',
       voice: voice,
       input: script,
       speed: clampedSpeed,
