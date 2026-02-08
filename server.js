@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const generateScript = require('./api/generate-script');
 const tts = require('./api/tts');
+const aiMatch = require('./api/ai-match');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,11 +54,17 @@ app.post('/api/generate-script', (req, res, next) => {
   next();
 }, generateScript);
 
-// TTS endpoint  
+// TTS endpoint
 app.post('/api/tts', (req, res, next) => {
   console.log('POST /api/tts called');
   next();
 }, tts);
+
+// AI match endpoint
+app.post('/api/ai-match', (req, res, next) => {
+  console.log('POST /api/ai-match called');
+  next();
+}, aiMatch);
 
 // List music files endpoint
 app.get('/api/music-files', (req, res) => {
@@ -138,6 +145,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`API Routes:`);
   console.log(`  POST /api/generate-script`);
   console.log(`  POST /api/tts`);
+  console.log(`  POST /api/ai-match`);
   console.log(`  GET  /api/music-files`);
   console.log(`  GET  /api/health`);
   console.log(`=================================`);
