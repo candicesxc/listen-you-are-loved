@@ -55,7 +55,7 @@ Rules:
 - Match voice to the persona's likely age and gender as closely as possible
 - Pick music that complements the tone
 - musicVolume should be 0-100 (default 15)
-- oneLineSummary: a short warm sentence describing what this affirmation is about
+- oneLineSummary: a short phrase starting with the persona role (e.g. "Grandma on resting when you're tired", "Best friend on believing in yourself"). Keep it concrete and specific to the persona and topic.
 
 Respond with ONLY valid JSON, no markdown:
 {"voice": "...", "music": "...", "musicVolume": 15, "oneLineSummary": "..."}`;

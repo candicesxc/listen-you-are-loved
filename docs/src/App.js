@@ -865,7 +865,7 @@ function App() {
         voice: effectiveVoice,
         music: effectiveMusic,
         musicVolume: Math.round(effectiveVolume * 100),
-        oneLineSummary: summary || script.substring(0, 80),
+        oneLineSummary: summary || (persona + (instructions ? ' — ' + instructions : '')).substring(0, 100),
       });
     } catch (err) {
       setError(err.message || text.errors.failedToGenerateAudio);
@@ -977,12 +977,14 @@ function App() {
             }}>
               {text.getStarted}
             </button>
-            {savedAffirmations.length > 0 && (
+          </div>
+          {savedAffirmations.length > 0 && (
+            <div className="cta-row" style={{ marginTop: '8px' }}>
               <button className="btn-secondary lexend-body" onClick={openGallery}>
                 {text.replayLastAffirmation}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1168,28 +1170,30 @@ function App() {
       )}
 
       {showGallery && (
-        <div className="gallery-overlay" onClick={closeGallery}>
-          <div className="gallery-modal" onClick={e => e.stopPropagation()}>
-            <div className="gallery-header">
-              <h2 className="dynapuff-main">{text.savedAffirmations}</h2>
-              <button className="btn-secondary lexend-body" onClick={closeGallery}>
-                {text.closeGallery}
-              </button>
-            </div>
-            <div className="gallery-list">
-              {savedAffirmations.length === 0 ? (
-                <p className="lexend-body helper-text">{text.noSavedAffirmations}</p>
-              ) : (
-                savedAffirmations.map(item => (
-                  <div key={item.id} className="gallery-item">
-                    <p className="gallery-summary lexend-body">{item.oneLineSummary}</p>
-                    {galleryUrls[item.id] && (
-                      <audio className="audio-player" controls src={galleryUrls[item.id]} />
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+        <div className="frame workspace-frame" style={{ position: 'relative' }}>
+          <button
+            className="gallery-close-btn"
+            onClick={closeGallery}
+            aria-label="Close"
+          >
+            &times;
+          </button>
+          <div className="section-header">
+            <h2 className="dynapuff-main">{text.savedAffirmations}</h2>
+          </div>
+          <div className="gallery-list">
+            {savedAffirmations.length === 0 ? (
+              <p className="lexend-body helper-text">{text.noSavedAffirmations}</p>
+            ) : (
+              savedAffirmations.map(item => (
+                <div key={item.id} className="gallery-item">
+                  <p className="gallery-summary lexend-body">{item.oneLineSummary}</p>
+                  {galleryUrls[item.id] && (
+                    <audio className="audio-player" controls src={galleryUrls[item.id]} />
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
