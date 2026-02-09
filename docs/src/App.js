@@ -1176,7 +1176,10 @@ function App() {
             onClick={closeGallery}
             aria-label="Close"
           >
-            &times;
+            <svg viewBox="0 0 14 14" fill="none">
+              <line x1="1" y1="1" x2="13" y2="13" />
+              <line x1="13" y1="1" x2="1" y2="13" />
+            </svg>
           </button>
           <div className="section-header">
             <h2 className="dynapuff-main">{text.savedAffirmations}</h2>
