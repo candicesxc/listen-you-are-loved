@@ -139,6 +139,58 @@
       justify-content: center;
     }
 
+    .gallery-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s ease;
+    }
+
+    .gallery-close-btn:hover {
+      background: rgba(239, 187, 207, 0.2);
+    }
+
+    .gallery-close-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #3E3A52;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .gallery-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .gallery-item {
+      background: rgba(239, 187, 207, 0.1);
+      border: 2px solid #EFBBCF;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .gallery-summary {
+      font-weight: 500;
+      color: #3E3A52;
+      margin: 0;
+    }
+
     .form-section {
       display: flex;
       flex-direction: column;
@@ -535,6 +587,33 @@
 
       .hero-illustration {
         max-width: 280px;
+      }
+
+      .gallery-close-btn {
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        padding: 6px;
+      }
+
+      .gallery-close-btn svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      .gallery-list {
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .gallery-item {
+        padding: 12px;
+        gap: 10px;
+      }
+
+      .gallery-summary {
+        font-size: 0.85rem;
       }
     }
   </style>
